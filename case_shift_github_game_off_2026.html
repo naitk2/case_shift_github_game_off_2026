@@ -1,0 +1,3818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CASE SHIFT — GitHub Game Off 2026</title>
+<style>
+  :root {
+    --bg-void: #040a0e;
+    --bg-lower: #050d12;
+    --bg-upper: #091c25;
+    --glass-dark: rgba(9, 32, 41, 0.62);
+    --glass-mid: rgba(14, 56, 68, 0.56);
+    --glass-btn-primary: linear-gradient(180deg, rgba(24, 134, 152, 0.58) 0%, rgba(11, 78, 94, 0.68) 100%);
+    --glass-btn-secondary: linear-gradient(180deg, rgba(14, 52, 64, 0.58) 0%, rgba(8, 30, 39, 0.68) 100%);
+    --border: rgba(45, 212, 230, 0.34);
+    --border-strong: rgba(56, 232, 245, 0.82);
+    --accent: #32dce8;
+    --accent-soft: #7eeef5;
+    --accent-glow: rgba(45, 212, 230, 0.34);
+    --text: #eef9fb;
+    --muted: #6ea8b4;
+    --gold: #ffcf5c;
+    --green: #45e8a2;
+    --red: #ff5678;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 26% 32%, rgba(20, 128, 146, 0.32) 0%, rgba(8, 44, 54, 0.14) 36%, transparent 66%),
+      radial-gradient(circle at 78% 72%, rgba(16, 108, 126, 0.24) 0%, transparent 56%),
+      linear-gradient(180deg, #04090d 0%, #061218 52%, #03080b 100%);
+    color: var(--text);
+    font-family: var(--mono);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #app {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  /* Minimal Glassmorphic Top HUD */
+  #hud {
+    width: min(960px, calc(100vw - 20px), calc((100vh - 72px) * 16 / 9));
+    min-height: 44px;
+    background: var(--glass-dark);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(126, 238, 245, 0.08);
+    transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+    flex-wrap: wrap;
+    z-index: 5;
+  }
+
+  #hud.shifted {
+    border-color: var(--border-strong);
+    box-shadow: 0 0 22px var(--accent-glow), inset 0 1px 0 rgba(126, 238, 245, 0.2);
+    background: rgba(12, 48, 60, 0.78);
+  }
+
+  .hud-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .level-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+  }
+
+  .level-num {
+    color: var(--accent-soft);
+    background: rgba(45, 212, 230, 0.12);
+    border: 1px solid rgba(50, 220, 232, 0.42);
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+
+  .level-title {
+    color: var(--text);
+    text-shadow: 0 0 10px rgba(126, 238, 245, 0.25);
+  }
+
+  /* Shift Keycap Indicator (Glass Pill) */
+  #shift-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(50, 220, 232, 0.28);
+    background: rgba(8, 28, 36, 0.72);
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    transition: all 110ms ease;
+  }
+
+  #shift-indicator .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #2f5b66;
+    transition: all 110ms ease;
+  }
+
+  #shift-indicator.active {
+    background: linear-gradient(180deg, rgba(28, 148, 166, 0.62), rgba(14, 88, 104, 0.74));
+    border-color: var(--border-strong);
+    color: #ffffff;
+    box-shadow: 0 0 16px var(--accent-glow);
+  }
+
+  #shift-indicator.active .dot {
+    background: #7ef9ff;
+    box-shadow: 0 0 10px #7ef9ff;
+  }
+
+  .stat-pill {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .stat-pill strong {
+    color: var(--accent-soft);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  select.hud-select, button.hud-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    background: rgba(11, 40, 50, 0.64);
+    color: var(--accent-soft);
+    border: 1px solid rgba(50, 220, 232, 0.35);
+    border-radius: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease, color 120ms ease;
+  }
+
+  select.hud-select option {
+    background: #071920;
+    color: var(--text);
+  }
+
+  select.hud-select:hover, button.hud-btn:hover {
+    border-color: var(--border-strong);
+    background: rgba(20, 88, 104, 0.58);
+    box-shadow: 0 0 12px rgba(45, 212, 230, 0.25);
+    color: #ffffff;
+  }
+
+  button.hud-btn.muted {
+    color: var(--red);
+    border-color: rgba(255, 86, 120, 0.55);
+  }
+
+  /* Responsive 16:9 Stage Container */
+  #stage-wrap {
+    position: relative;
+    width: min(960px, calc(100vw - 20px), calc((100vh - 72px) * 16 / 9));
+    aspect-ratio: 16 / 9;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+    box-shadow: 0 22px 56px rgba(0, 0, 0, 0.68), 0 0 36px rgba(18, 118, 136, 0.14);
+    background: var(--bg-lower);
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+
+  #stage-wrap.shifted {
+    border-color: var(--border-strong);
+    box-shadow: 0 0 34px var(--accent-glow), 0 22px 56px rgba(0, 0, 0, 0.72);
+  }
+
+  canvas#game {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: crosshair;
+  }
+
+  /* Overlays (Title & Victory) — Void Nebula Glass */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    background:
+      radial-gradient(circle at 32% 36%, rgba(22, 138, 156, 0.34) 0%, rgba(10, 56, 68, 0.18) 38%, transparent 68%),
+      radial-gradient(circle at 74% 66%, rgba(18, 112, 130, 0.22) 0%, transparent 55%),
+      rgba(4, 11, 15, 0.84);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 10;
+    transition: opacity 240ms ease, background 140ms ease;
+  }
+
+  .overlay.shifted-bg {
+    background:
+      radial-gradient(circle at 36% 36%, rgba(40, 198, 218, 0.42) 0%, rgba(14, 78, 94, 0.24) 40%, transparent 70%),
+      radial-gradient(circle at 72% 64%, rgba(28, 152, 172, 0.28) 0%, transparent 56%),
+      rgba(6, 18, 25, 0.86);
+  }
+
+  .overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .jam-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    color: var(--accent);
+    text-shadow: 0 0 14px rgba(50, 220, 232, 0.45);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+
+  #title-logo {
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    padding-left: 0.28em;
+    color: #f3fbfc;
+    line-height: 1.08;
+    margin-bottom: 10px;
+    text-shadow: 0 0 28px rgba(126, 238, 245, 0.22);
+    transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1), color 120ms ease, text-shadow 120ms ease, font-weight 120ms ease;
+  }
+
+  #title-logo.shifted {
+    color: #ffffff;
+    font-weight: 700;
+    transform: scale(1.07);
+    text-shadow: 0 0 32px rgba(56, 232, 245, 0.8);
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: clamp(11px, 1.4vw, 13px);
+    letter-spacing: 0.1em;
+    margin-bottom: 26px;
+    text-align: center;
+  }
+
+  .subtitle .key-inline {
+    color: var(--accent-soft);
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(50, 220, 232, 0.45);
+  }
+
+  /* VØID ARC Signature Rounded Cyan-Bordered Glass Buttons */
+  .primary-btn {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    padding-left: calc(44px + 0.28em);
+    padding-right: 44px;
+    padding-top: 13px;
+    padding-bottom: 13px;
+    min-width: 224px;
+    color: #f4fcfd;
+    background: var(--glass-btn-primary);
+    border: 1.5px solid var(--border-strong);
+    border-radius: 16px;
+    cursor: pointer;
+    box-shadow: 0 0 22px rgba(45, 212, 230, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transition: transform 110ms ease, background 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  }
+
+  .primary-btn:hover {
+    background: linear-gradient(180deg, rgba(34, 168, 188, 0.72) 0%, rgba(16, 102, 120, 0.8) 100%);
+    border-color: #7ef9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(56, 232, 245, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  .primary-btn:active {
+    transform: translateY(0);
+  }
+
+  .secondary-btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    padding: 12px 26px 12px calc(26px + 0.24em);
+    color: var(--accent-soft);
+    background: var(--glass-btn-secondary);
+    border: 1.5px solid rgba(50, 220, 232, 0.58);
+    border-radius: 16px;
+    cursor: pointer;
+    box-shadow: 0 0 14px rgba(45, 212, 230, 0.14);
+    transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease, transform 110ms ease;
+  }
+
+  .secondary-btn:hover {
+    border-color: #7ef9ff;
+    background: rgba(20, 88, 104, 0.62);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(45, 212, 230, 0.3);
+  }
+
+  .controls-grid {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 14px;
+    max-width: 720px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  .control-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    background: rgba(11, 42, 52, 0.45);
+    border: 1px solid rgba(50, 220, 232, 0.22);
+  }
+
+  kbd {
+    display: inline-block;
+    padding: 2px 7px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent-soft);
+    background: rgba(8, 28, 36, 0.85);
+    border: 1px solid rgba(50, 220, 232, 0.42);
+    border-radius: 6px;
+  }
+
+  /* Victory Stats */
+  .victory-title {
+    font-size: clamp(28px, 4.8vw, 46px);
+    font-weight: 600;
+    color: #f3fbfc;
+    text-shadow: 0 0 26px rgba(56, 232, 245, 0.55);
+    letter-spacing: 0.26em;
+    padding-left: 0.26em;
+    margin-bottom: 8px;
+  }
+
+  .victory-stats {
+    display: flex;
+    gap: 14px;
+    margin: 20px 0 26px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .v-card {
+    background: rgba(10, 38, 48, 0.56);
+    border: 1px solid rgba(50, 220, 232, 0.35);
+    border-radius: 16px;
+    padding: 14px 22px;
+    min-width: 148px;
+    text-align: center;
+    box-shadow: 0 0 18px rgba(45, 212, 230, 0.12);
+  }
+
+  .v-card .v-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .v-card .v-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+
+  /* Touch Controls (Mobile/Tablet) */
+  #touch-controls {
+    display: none;
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+    z-index: 8;
+  }
+
+  @media (pointer: coarse) {
+    #touch-controls {
+      display: flex;
+    }
+  }
+
+  .touch-pad {
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+  }
+
+  .touch-btn {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--accent-soft);
+    background: rgba(10, 40, 50, 0.72);
+    border: 1.5px solid rgba(50, 220, 232, 0.45);
+    border-radius: 14px;
+    min-width: 54px;
+    height: 48px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+    box-shadow: 0 0 14px rgba(45, 212, 230, 0.15);
+  }
+
+  .touch-btn.pressed {
+    background: rgba(34, 168, 188, 0.55);
+    border-color: #7ef9ff;
+    color: #ffffff;
+    box-shadow: 0 0 18px rgba(56, 232, 245, 0.45);
+  }
+
+  @media (max-width: 640px) {
+    #hud {
+      font-size: 11px;
+      padding: 5px 8px;
+      gap: 6px;
+    }
+    .stat-pill {
+      font-size: 9px;
+    }
+  }
+
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Minimal Top HUD -->
+  <header id="hud">
+    <div class="hud-group">
+      <div class="level-badge">
+        <span class="level-num" id="hud-level-num">01</span>
+        <span class="level-title" id="hud-level-name">GROW</span>
+      </div>
+      <div id="shift-indicator" title="Hold SHIFT to capitalize reality">
+        <span class="dot"></span>
+        <span id="shift-indicator-text">shift: idle</span>
+      </div>
+    </div>
+
+    <div class="hud-group">
+      <span class="stat-pill">SHIFTS <strong id="hud-shifts">0</strong></span>
+      <span class="stat-pill">TIME <strong id="hud-timer">00:00.00</strong></span>
+      <select id="level-select" class="hud-select" aria-label="Select Level"></select>
+      <button id="btn-restart" class="hud-btn" title="Restart Level (R)">R</button>
+      <button id="btn-mute" class="hud-btn" title="Toggle Audio (M)">SFX</button>
+    </div>
+  </header>
+
+  <!-- 16:9 Game Stage -->
+  <main id="stage-wrap">
+    <canvas id="game" width="960" height="540"></canvas>
+
+    <!-- Title Screen Overlay -->
+    <section id="title-overlay" class="overlay">
+      <div class="jam-tag">GitHub Game Off 2026 &bull; Theme: SHIFT</div>
+      <h1 id="title-logo">case shift</h1>
+      <p class="subtitle">
+        The world is typography. Hold <span class="key-inline">[SHIFT]</span> to capitalize reality.
+      </p>
+      <button id="btn-play" class="primary-btn">PLAY</button>
+      <div class="controls-grid">
+        <div class="control-item"><kbd>A</kbd><kbd>D</kbd> / <kbd>&larr;</kbd><kbd>&rarr;</kbd> Move</div>
+        <div class="control-item"><kbd>W</kbd><kbd>&uarr;</kbd><kbd>Space</kbd> Jump</div>
+        <div class="control-item"><kbd>Shift</kbd> Capitalize</div>
+        <div class="control-item"><kbd>F</kbd><kbd>J</kbd> / <kbd>Click</kbd> Shoot</div>
+        <div class="control-item"><kbd>R</kbd> Restart</div>
+        <div class="control-item"><kbd>M</kbd> Mute</div>
+      </div>
+    </section>
+
+    <!-- Victory Screen Overlay -->
+    <section id="victory-overlay" class="overlay hidden">
+      <div class="jam-tag">ALL 12 LEVELS COMPLETE</div>
+      <h2 class="victory-title">CASE SHIFTED</h2>
+      <p class="subtitle">You mastered lowercase and UPPERCASE reality.</p>
+      <div class="victory-stats">
+        <div class="v-card">
+          <div class="v-label">Total Time</div>
+          <div class="v-value" id="v-time">00:00.00</div>
+        </div>
+        <div class="v-card">
+          <div class="v-label">Shift Presses</div>
+          <div class="v-value" id="v-shifts">0</div>
+        </div>
+        <div class="v-card">
+          <div class="v-label">Resets</div>
+          <div class="v-value" id="v-deaths">0</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="btn-play-again" class="primary-btn">PLAY AGAIN</button>
+        <button id="btn-title" class="secondary-btn">TITLE</button>
+      </div>
+    </section>
+
+    <!-- Touch Controls (Mobile/Tablet) -->
+    <div id="touch-controls">
+      <div class="touch-pad">
+        <button class="touch-btn" data-touch="left">&larr;</button>
+        <button class="touch-btn" data-touch="right">&rarr;</button>
+      </div>
+      <div class="touch-pad">
+        <button class="touch-btn" data-touch="fire">FIRE</button>
+        <button class="touch-btn" data-touch="shift">SHIFT</button>
+        <button class="touch-btn" data-touch="jump">JUMP</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ==================== CONFIG ====================
+  const CONFIG = {
+    WIDTH: 960,
+    HEIGHT: 540,
+    FIXED_DT: 1 / 60,
+    MAX_FRAME_DT: 0.05,
+    SHIFT_DURATION: 0.11, // 110ms smooth morph
+
+    // Player physics (Celeste-tight tuning)
+    PLAYER_W: 36,
+    PLAYER_H: 30,
+    MOVE_SPEED: 260,
+    GROUND_ACCEL: 2400,
+    GROUND_DECEL: 2600,
+    AIR_ACCEL: 1750,
+    AIR_DECEL: 750,
+    GRAVITY: 1350,
+    MAX_FALL: 660,
+    JUMP_VEL: -540,       // ~104-108px max jump height
+    JUMP_CUT_MULT: 0.46,  // variable jump height
+    COYOTE_TIME: 0.105,   // 105ms grace window
+    JUMP_BUFFER: 0.105,   // 105ms pre-land buffer
+
+    // Box dimensions (2.6x morph)
+    BOX_SMALL_W: 40,
+    BOX_SMALL_H: 32,
+    BOX_LARGE_W: 104,
+    BOX_LARGE_H: 84,
+    BOX_PUSH_SPEED: 145,
+
+    // Wind forces
+    WIND_GENTLE_ACCEL: 340,
+    WIND_STRONG_ACCEL: 2700,
+    WIND_MAX_UP_VEL: -440,
+
+    // Hazard threshold
+    HAZARD_ACTIVE_T: 0.45,
+
+    // Palette (Bioluminescent Void Teal)
+    COLORS: {
+      bgLower: [5, 13, 18],      // #050d12
+      bgUpper: [9, 28, 37],      // #091c25
+      wallFill: '#0b1e26',
+      wallStroke: '#1c4654',
+      wallTop: '#2e7d91',
+      playerLower: '#eef9fb',
+      playerUpper: '#5ef2ff',
+      boxLower: '#e5b94c',
+      boxUpper: '#ffd76a',
+      gapLower: '#f28b50',
+      gapUpper: '#ff6f47',
+      bridgeLower: '#2ac7d6',
+      bridgeUpper: '#6cf8ff',
+      windLower: '#5ce6b8',
+      windUpper: '#5ef2ff',
+      safe8: '#7eeef5',
+      hazardStar: '#ff5678',
+      exit: '#3fe0a0',
+      exitGlow: '#62f5bc'
+    }
+  };
+
+  // Math helpers
+  function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function smoothstep(t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); }
+  function lerpRGB(c1, c2, t) {
+    const r = Math.round(lerp(c1[0], c2[0], t));
+    const g = Math.round(lerp(c1[1], c2[1], t));
+    const b = Math.round(lerp(c1[2], c2[2], t));
+    return `rgb(${r},${g},${b})`;
+  }
+
+  // ==================== AUDIO ====================
+  const AUDIO = (() => {
+    let ctx = null;
+    let muted = false;
+    let noiseBuffer = null;
+
+    function init() {
+      if (ctx) {
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+        return;
+      }
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      ctx = new AudioCtx();
+
+      // Pre-generate 0.25s white noise buffer for tactile clicks
+      const sampleRate = ctx.sampleRate;
+      const len = Math.floor(sampleRate * 0.25);
+      noiseBuffer = ctx.createBuffer(1, len, sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < len; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+    }
+
+    function ready() {
+      if (muted) return false;
+      if (!ctx) init();
+      return Boolean(ctx && ctx.state === 'running');
+    }
+
+    function setMuted(val) {
+      muted = val;
+      return muted;
+    }
+
+    function isMuted() { return muted; }
+
+    // Tactile mechanical keyboard CLACK
+    function playShiftPress() {
+      if (!ready()) return;
+      const now = ctx.currentTime;
+
+      // Filtered noise burst
+      if (noiseBuffer) {
+        const noise = ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(2600, now);
+        filter.Q.setValueAtTime(1.6, now);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.028);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start(now);
+        noise.stop(now + 0.032);
+      }
+
+      // High-pitch crisp switch click
+      const osc = ctx.createOscillator();
+      const og = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(980, now);
+      osc.frequency.exponentialRampToValueAtTime(290, now + 0.022);
+      og.gain.setValueAtTime(0.16, now);
+      og.gain.exponentialRampToValueAtTime(0.001, now + 0.026);
+      osc.connect(og);
+      og.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.028);
+    }
+
+    // Softer, lower-pitched mechanical key release THOCK
+    function playShiftRelease() {
+      if (!ready()) return;
+      const now = ctx.currentTime;
+
+      if (noiseBuffer) {
+        const noise = ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(820, now);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.032);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start(now);
+        noise.stop(now + 0.035);
+      }
+
+      const osc = ctx.createOscillator();
+      const og = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(270, now);
+      osc.frequency.exponentialRampToValueAtTime(115, now + 0.038);
+      og.gain.setValueAtTime(0.14, now);
+      og.gain.exponentialRampToValueAtTime(0.001, now + 0.042);
+      osc.connect(og);
+      og.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.045);
+    }
+
+    // Snappy upward frequency sweep
+    function playJump() {
+      if (!ready()) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(230, now);
+      osc.frequency.exponentialRampToValueAtTime(600, now + 0.11);
+      g.gain.setValueAtTime(0.14, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.125);
+    }
+
+    // Soft low-pass thud
+    function playLand() {
+      if (!ready()) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(135, now);
+      osc.frequency.exponentialRampToValueAtTime(52, now + 0.065);
+      g.gain.setValueAtTime(0.14, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.075);
+    }
+
+    // Quick descending retro buzz
+    function playDeath() {
+      if (!ready()) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const g = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(78, now + 0.22);
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1200, now);
+      filter.frequency.exponentialRampToValueAtTime(260, now + 0.22);
+      g.gain.setValueAtTime(0.15, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.23);
+      osc.connect(filter);
+      filter.connect(g);
+      g.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    }
+
+    // Clean 3-note ascending synth arpeggio
+    function playLevelComplete() {
+      if (!ready()) return;
+      const now = ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+      notes.forEach((freq, i) => {
+        const start = now + i * 0.075;
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, start);
+        g.gain.setValueAtTime(0.001, start);
+        g.gain.linearRampToValueAtTime(0.16, start + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.001, start + 0.26);
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.28);
+      });
+    }
+
+    // Soft pneumatic sci-fi door slide whoosh
+    function playDoorOpen() {
+      if (!ready()) return;
+      const now = ctx.currentTime;
+      if (noiseBuffer) {
+        const noise = ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(900, now);
+        filter.frequency.exponentialRampToValueAtTime(2200, now + 0.14);
+        filter.Q.setValueAtTime(2.0, now);
+
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.linearRampToValueAtTime(0.09, now + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+        noise.connect(filter);
+        filter.connect(g);
+        g.connect(ctx.destination);
+        noise.start(now);
+        noise.stop(now + 0.17);
+      }
+      const osc = ctx.createOscillator();
+      const og = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(340, now);
+      osc.frequency.exponentialRampToValueAtTime(520, now + 0.12);
+      og.gain.setValueAtTime(0.05, now);
+      og.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      osc.connect(og);
+      og.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    }
+
+    // Crisp sci-fi blaster pew (punchier when SHIFT is active)
+    function playShoot(shifted) {
+      if (!ready()) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = shifted ? 'sawtooth' : 'triangle';
+      osc.frequency.setValueAtTime(shifted ? 1050 : 880, now);
+      osc.frequency.exponentialRampToValueAtTime(shifted ? 190 : 260, now + (shifted ? 0.11 : 0.08));
+      g.gain.setValueAtTime(shifted ? 0.13 : 0.10, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + (shifted ? 0.12 : 0.085));
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.13);
+    }
+
+    // Metallic hit spark ping
+    function playEnemyHit() {
+      if (!ready()) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(620, now);
+      osc.frequency.exponentialRampToValueAtTime(240, now + 0.06);
+      g.gain.setValueAtTime(0.09, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.07);
+    }
+
+    // Punchy enemy drone explosion
+    function playEnemyDestroy() {
+      if (!ready()) return;
+      const now = ctx.currentTime;
+      if (noiseBuffer) {
+        const noise = ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1400, now);
+        filter.frequency.exponentialRampToValueAtTime(180, now + 0.2);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.22, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.21);
+        noise.connect(filter);
+        filter.connect(g);
+        g.connect(ctx.destination);
+        noise.start(now);
+        noise.stop(now + 0.22);
+      }
+      const osc = ctx.createOscillator();
+      const og = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(240, now);
+      osc.frequency.exponentialRampToValueAtTime(55, now + 0.19);
+      og.gain.setValueAtTime(0.14, now);
+      og.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      osc.connect(og);
+      og.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.21);
+    }
+
+    return {
+      init,
+      setMuted,
+      isMuted,
+      playShiftPress,
+      playShiftRelease,
+      playJump,
+      playLand,
+      playDeath,
+      playLevelComplete,
+      playDoorOpen,
+      playShoot,
+      playEnemyHit,
+      playEnemyDestroy
+    };
+  })();
+
+  // ==================== PHYSICS ====================
+  const PHYSICS = {
+    aabb(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    },
+
+    // Subtract gap carve zones from static terrain solids
+    buildTerrainSolids(rawSolids, gaps, t) {
+      let rects = rawSolids.map(s => ({ x: s.x, y: s.y, w: s.w, h: s.h, kind: 'wall' }));
+      for (const gap of gaps) {
+        const curW = lerp(gap.wSmall, gap.wLarge, t);
+        const gx1 = gap.cx - curW / 2;
+        const gx2 = gap.cx + curW / 2;
+        const gy1 = gap.y - 2;
+        const gy2 = gap.y + gap.h + 2;
+
+        const next = [];
+        for (const r of rects) {
+          const overlapsY = r.y < gy2 && r.y + r.h > gy1;
+          const overlapsX = r.x < gx2 && r.x + r.w > gx1;
+          if (!overlapsY || !overlapsX) {
+            next.push(r);
+            continue;
+          }
+          // Split horizontally around the carved pit
+          if (r.x < gx1) {
+            next.push({ x: r.x, y: r.y, w: gx1 - r.x, h: r.h, kind: 'wall' });
+          }
+          if (r.x + r.w > gx2) {
+            next.push({ x: gx2, y: r.y, w: (r.x + r.w) - gx2, h: r.h, kind: 'wall' });
+          }
+        }
+        rects = next;
+      }
+      return rects;
+    },
+
+    // Resolve AABB against solid list along X then Y
+    moveAndCollide(body, solids, dt) {
+      let hitX = false;
+      let hitY = false;
+      let landed = false;
+
+      // Horizontal
+      body.x += body.vx * dt;
+      for (const s of solids) {
+        if (this.aabb(body, s)) {
+          if (body.vx > 0) {
+            body.x = s.x - body.w;
+          } else if (body.vx < 0) {
+            body.x = s.x + s.w;
+          }
+          body.vx = 0;
+          hitX = true;
+        }
+      }
+
+      // Vertical
+      body.y += body.vy * dt;
+      for (const s of solids) {
+        if (this.aabb(body, s)) {
+          if (body.vy > 0) {
+            body.y = s.y - body.h;
+            landed = true;
+          } else if (body.vy < 0) {
+            body.y = s.y + s.h;
+          }
+          body.vy = 0;
+          hitY = true;
+        }
+      }
+
+      return { hitX, hitY, landed };
+    },
+
+    // Anti-clipping & crush safety: nudge player out of any overlapping solid
+    resolveOverlaps(player, solids) {
+      for (let pass = 0; pass < 4; pass++) {
+        let overlapped = false;
+        for (const s of solids) {
+          if (!this.aabb(player, s)) continue;
+          overlapped = true;
+
+          const overlapLeft = (player.x + player.w) - s.x;
+          const overlapRight = (s.x + s.w) - player.x;
+          const overlapTop = (player.y + player.h) - s.y;
+          const overlapBottom = (s.y + s.h) - player.y;
+
+          // Prefer nudging upward slightly when near top surface (smooth riding)
+          const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+          if (overlapTop <= minOverlap + 6) {
+            player.y = s.y - player.h;
+            if (player.vy > 0) player.vy = 0;
+          } else if (minOverlap === overlapLeft) {
+            player.x = s.x - player.w;
+          } else if (minOverlap === overlapRight) {
+            player.x = s.x + s.w;
+          } else {
+            player.y = s.y + s.h;
+            if (player.vy < 0) player.vy = 0;
+          }
+        }
+        if (!overlapped) return true; // clean
+      }
+
+      // Final check: still embedded in solid geometry => crushed
+      for (const s of solids) {
+        if (this.aabb(player, s)) {
+          // Try small radial rescue offsets before declaring crush
+          const offsets = [
+            [0, -10], [0, -18], [-10, 0], [10, 0], [-18, 0], [18, 0], [0, 10]
+          ];
+          for (const [ox, oy] of offsets) {
+            const test = { x: player.x + ox, y: player.y + oy, w: player.w, h: player.h };
+            if (!solids.some(sol => this.aabb(test, sol))) {
+              player.x = test.x;
+              player.y = test.y;
+              return true;
+            }
+          }
+          return false; // crushed
+        }
+      }
+      return true;
+    }
+  };
+
+  // ==================== ENTITIES ====================
+  const ENTITIES = {
+    createPlayer(spawn) {
+      return {
+        x: spawn.x,
+        y: spawn.y,
+        w: CONFIG.PLAYER_W,
+        h: CONFIG.PLAYER_H,
+        vx: 0,
+        vy: 0,
+        facing: 1,
+        onGround: false,
+        coyoteTimer: 0,
+        jumpBufferTimer: 0,
+        scaleX: 1,
+        scaleY: 1,
+        runDustTimer: 0,
+        inWind: false,
+        animTime: 0,
+        animState: 'idle',
+        jetFlame: 0.25,
+        jetSparkTimer: 0,
+        shootCooldown: 0,
+        muzzleFlash: 0
+      };
+    },
+
+    createBox(def) {
+      return {
+        cx: def.cx,
+        bottom: def.bottom,
+        w: CONFIG.BOX_SMALL_W,
+        h: CONFIG.BOX_SMALL_H,
+        x: def.cx - CONFIG.BOX_SMALL_W / 2,
+        y: def.bottom - CONFIG.BOX_SMALL_H,
+        vy: 0,
+        prevY: def.bottom - CONFIG.BOX_SMALL_H,
+        prevX: def.cx - CONFIG.BOX_SMALL_W / 2,
+        prevW: CONFIG.BOX_SMALL_W
+      };
+    },
+
+    createBridge(def) {
+      const wSmall = def.wSmall ?? 72;
+      const wLarge = def.wLarge ?? 220;
+      return {
+        cx: def.cx,
+        cy: def.cy,
+        wSmall,
+        wLarge,
+        hSmall: 22,
+        hLarge: 26,
+        x: def.cx - wSmall / 2,
+        y: def.cy - 11,
+        w: wSmall,
+        h: 22
+      };
+    },
+
+    createGap(def) {
+      return {
+        cx: def.cx,
+        y: def.y,
+        h: def.h ?? 110,
+        wSmall: def.wSmall ?? 96,
+        wLarge: def.wLarge ?? 260,
+        curW: def.wSmall ?? 96
+      };
+    },
+
+    createWind(def) {
+      const particles = [];
+      const count = Math.max(10, Math.floor((def.w * def.h) / 2400));
+      const glyphs = ['|', '^', '.', ':'];
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          rx: Math.random(),
+          ry: Math.random(),
+          speed: 0.55 + Math.random() * 0.75,
+          glyph: glyphs[i % glyphs.length]
+        });
+      }
+      return {
+        x: def.x,
+        y: def.y,
+        w: def.w,
+        h: def.h,
+        particles
+      };
+    },
+
+    createHazard(def) {
+      const size = def.size ?? 44;
+      return {
+        cx: def.cx,
+        cy: def.cy,
+        size,
+        x: def.cx - size / 2,
+        y: def.cy - size / 2,
+        w: size,
+        h: size,
+        angle: Math.random() * Math.PI * 2
+      };
+    },
+
+    createEnemy(def) {
+      const wSmall = 34, hSmall = 28;
+      const wLarge = 46, hLarge = 38;
+      return {
+        cx: def.x,
+        bottom: def.y,
+        minX: def.minX,
+        maxX: def.maxX,
+        dir: def.dir || 1,
+        baseSpeed: def.speed || 78,
+        wSmall, hSmall, wLarge, hLarge,
+        w: wSmall,
+        h: hSmall,
+        x: def.x - wSmall / 2,
+        y: def.y - hSmall,
+        hp: def.hp || 2,
+        maxHp: def.hp || 2,
+        hitFlash: 0,
+        bobPhase: Math.random() * Math.PI * 2,
+        alive: true
+      };
+    },
+
+    createExit(def) {
+      return {
+        x: def.x,
+        y: def.y,
+        w: 60,
+        h: 44,
+        pulse: 0,
+        openT: 0,
+        wasOpen: false,
+        warpT: 0
+      };
+    }
+  };
+
+  // ==================== LEVELS ====================
+  // All 8 levels verified mathematically for 960x540 with:
+  // Max jump height ~104px, safe flat gap <=120px, unjumpable >=250px,
+  // BOX height 84px (rides player +84px, combined reach ~188px).
+  const LEVELS = [
+    // Level 01 — GROW
+    {
+      num: '01',
+      name: 'GROW',
+      hint: 'hold [SHIFT] to grow box into BOX and climb the wall',
+      spawn: { x: 86, y: 428 },
+      solids: [
+        { x: 0, y: 0, w: 960, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 936, y: 0, w: 24, h: 540 },
+        { x: 24, y: 460, w: 536, h: 80 },
+        { x: 560, y: 310, w: 376, h: 230 } // 150px tall wall -> requires BOX
+      ],
+      boxes: [
+        { cx: 455, bottom: 460 }
+      ],
+      gaps: [],
+      bridges: [],
+      winds: [],
+      hazards: [],
+      exit: { x: 815, y: 266 }
+    },
+
+    // Level 02 — LET GO
+    {
+      num: '02',
+      name: 'LET GO',
+      hint: 'GAP widens the pit — release [SHIFT] to shrink it back into a jumpable gap',
+      spawn: { x: 64, y: 418 },
+      solids: [
+        { x: 0, y: 0, w: 960, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 936, y: 0, w: 24, h: 540 },
+        { x: 24, y: 450, w: 912, h: 90 },
+        { x: 225, y: 310, w: 70, h: 140 } // 140px wall -> climb with BOX, then LET GO for gaps
+      ],
+      boxes: [
+        { cx: 150, bottom: 450 }
+      ],
+      gaps: [
+        { cx: 485, y: 450, h: 95, wSmall: 96, wLarge: 270 },
+        { cx: 705, y: 450, h: 95, wSmall: 96, wLarge: 270 }
+      ],
+      bridges: [],
+      winds: [],
+      hazards: [],
+      exit: { x: 848, y: 406 }
+    },
+
+    // Level 03 — SPAN
+    {
+      num: '03',
+      name: 'SPAN',
+      hint: 'hold [SHIFT] to extend bridge into BRIDGE across the chasm',
+      spawn: { x: 68, y: 398 },
+      solids: [
+        { x: 0, y: 0, w: 960, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 936, y: 0, w: 24, h: 540 },
+        { x: 24, y: 430, w: 196, h: 110 },
+        { x: 520, y: 430, w: 130, h: 110 },
+        { x: 740, y: 285, w: 196, h: 255 } // 145px above island
+      ],
+      boxes: [
+        { cx: 590, bottom: 430 }
+      ],
+      gaps: [],
+      bridges: [
+        { cx: 370, cy: 435, wSmall: 74, wLarge: 260 }
+      ],
+      winds: [],
+      hazards: [],
+      enemies: [
+        { x: 800, y: 285, minX: 758, maxX: 908, speed: 70, hp: 2 }
+      ],
+      exit: { x: 838, y: 241 }
+    },
+
+    // Level 04 — PUSH & LIFT
+    {
+      num: '04',
+      name: 'PUSH & LIFT',
+      hint: 'push lowercase box into position, stand on it, then hold [SHIFT] to ride BOX up',
+      spawn: { x: 68, y: 438 },
+      solids: [
+        { x: 0, y: 0, w: 960, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 936, y: 0, w: 24, h: 540 },
+        { x: 24, y: 470, w: 912, h: 70 },
+        { x: 430, y: 325, w: 135, h: 24 },  // floating mid ledge (145px high)
+        { x: 775, y: 265, w: 161, h: 26 }   // floating exit ledge (no box trap!)
+      ],
+      boxes: [
+        { cx: 185, bottom: 470 }
+      ],
+      gaps: [],
+      bridges: [
+        { cx: 670, cy: 325, wSmall: 68, wLarge: 196 }
+      ],
+      winds: [],
+      hazards: [],
+      enemies: [
+        { x: 495, y: 325, minX: 446, maxX: 548, speed: 68, hp: 2 }
+      ],
+      exit: { x: 848, y: 221 }
+    },
+
+    // Level 05 — UPDRAFT
+    {
+      num: '05',
+      name: 'UPDRAFT',
+      hint: 'wind is a gentle breeze — hold [SHIFT] to ride the WIND updraft',
+      spawn: { x: 72, y: 438 },
+      solids: [
+        { x: 0, y: 0, w: 960, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 936, y: 0, w: 24, h: 540 },
+        { x: 24, y: 470, w: 386, h: 70 },
+        { x: 410, y: 170, w: 42, h: 370 },  // 300px tall divider
+        { x: 452, y: 390, w: 148, h: 150 }, // landing pad
+        { x: 785, y: 185, w: 151, h: 355 }  // high exit ledge
+      ],
+      boxes: [],
+      gaps: [],
+      bridges: [],
+      winds: [
+        { x: 270, y: 120, w: 118, h: 350 },
+        { x: 632, y: 130, w: 120, h: 390 }
+      ],
+      hazards: [],
+      enemies: [
+        { x: 525, y: 390, minX: 468, maxX: 584, speed: 72, hp: 2 }
+      ],
+      exit: { x: 850, y: 141 }
+    },
+
+    // Level 06 — SHIFT + 8
+    {
+      num: '06',
+      name: 'SHIFT + 8',
+      hint: '8 is safe to stand on — hold [SHIFT] mid-air for BRIDGE, release before landing on 8',
+      spawn: { x: 68, y: 388 },
+      solids: [
+        { x: 0, y: 0, w: 960, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 936, y: 0, w: 24, h: 540 },
+        { x: 24, y: 420, w: 156, h: 120 },
+        { x: 816, y: 340, w: 120, h: 200 }
+      ],
+      boxes: [],
+      gaps: [],
+      bridges: [
+        { cx: 560, cy: 382, wSmall: 70, wLarge: 204 }
+      ],
+      winds: [],
+      hazards: [
+        { cx: 270, cy: 405, size: 44 },
+        { cx: 395, cy: 382, size: 44 },
+        { cx: 735, cy: 362, size: 44 }
+      ],
+      enemies: [
+        { x: 560, y: 325, minX: 490, maxX: 630, speed: 82, hp: 2 }
+      ],
+      exit: { x: 858, y: 296 }
+    },
+
+    // Level 07 — RHYTHM
+    {
+      num: '07',
+      name: 'RHYTHM',
+      hint: 'toggle [SHIFT] mid-air: BRIDGE -> release for gap -> hold for WIND',
+      spawn: { x: 58, y: 388 },
+      solids: [
+        { x: 0, y: 0, w: 960, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 936, y: 0, w: 24, h: 540 },
+        { x: 24, y: 420, w: 121, h: 120 },
+        { x: 388, y: 420, w: 262, h: 120 },
+        { x: 805, y: 195, w: 131, h: 345 }
+      ],
+      boxes: [],
+      gaps: [
+        { cx: 519, y: 420, h: 125, wSmall: 94, wLarge: 238 }
+      ],
+      bridges: [
+        { cx: 265, cy: 422, wSmall: 68, wLarge: 198 }
+      ],
+      winds: [
+        { x: 676, y: 120, w: 102, h: 395 }
+      ],
+      hazards: [
+        { cx: 519, cy: 300, size: 40 }
+      ],
+      enemies: [
+        { x: 860, y: 195, minX: 820, maxX: 916, speed: 74, hp: 2 }
+      ],
+      exit: { x: 852, y: 151 }
+    },
+
+    // Level 08 — CAPS LOCK (Finale)
+    {
+      num: '08',
+      name: 'CAPS LOCK',
+      hint: 'push & lift -> 8 -> BRIDGE -> gap -> WIND -> 8 -> EXIT',
+      spawn: { x: 56, y: 438 },
+      solids: [
+        { x: 0, y: 0, w: 960, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 936, y: 0, w: 24, h: 540 },
+        { x: 24, y: 470, w: 326, h: 70 },   // start floor
+        { x: 252, y: 325, w: 108, h: 24 },  // floating platform 1 (145px high)
+        { x: 694, y: 340, w: 242, h: 200 }, // right platform with gap
+        { x: 638, y: 140, w: 164, h: 24 },  // upper balcony
+        { x: 368, y: 140, w: 138, h: 24 }   // finale exit balcony
+      ],
+      boxes: [
+        { cx: 142, bottom: 470 }
+      ],
+      gaps: [
+        { cx: 798, y: 340, h: 205, wSmall: 88, wLarge: 204 }
+      ],
+      bridges: [
+        { cx: 570, cy: 318, wSmall: 68, wLarge: 196 }
+      ],
+      winds: [
+        { x: 848, y: 78, w: 86, h: 262 }
+      ],
+      hazards: [
+        { cx: 430, cy: 318, size: 42 },
+        { cx: 570, cy: 140, size: 42 }
+      ],
+      enemies: [
+        { x: 715, y: 140, minX: 654, maxX: 786, speed: 80, hp: 2 }
+      ],
+      exit: { x: 404, y: 96 }
+    },
+
+    // Level 09 — DOUBLE LIFT
+    {
+      num: '09',
+      name: 'DOUBLE LIFT',
+      hint: 'climb with BOX -> release for 8 -> hold for BRIDGE & WIND to the upper deck',
+      spawn: { x: 64, y: 438 },
+      solids: [
+        { x: 0, y: 0, w: 960, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 936, y: 0, w: 24, h: 540 },
+        { x: 24, y: 470, w: 276, h: 70 },
+        { x: 260, y: 330, w: 130, h: 24 },  // 140px high ledge
+        { x: 520, y: 165, w: 190, h: 24 }   // upper exit balcony
+      ],
+      boxes: [
+        { cx: 170, bottom: 470 }
+      ],
+      gaps: [],
+      bridges: [
+        { cx: 625, cy: 330, wSmall: 64, wLarge: 180 }
+      ],
+      winds: [
+        { x: 745, y: 100, w: 100, h: 375 }
+      ],
+      hazards: [
+        { cx: 485, cy: 330, size: 42 }
+      ],
+      enemies: [
+        { x: 645, y: 165, minX: 590, maxX: 696, speed: 78, hp: 2 }
+      ],
+      exit: { x: 552, y: 121 }
+    },
+
+    // Level 10 — SKYWAY (Long Scrolling Level — 1920px)
+    {
+      num: '10',
+      name: 'SKYWAY',
+      width: 1920,
+      hint: 'LONG RUN: chain BRIDGE, gap, 8, and WIND across the skyway',
+      spawn: { x: 68, y: 388 },
+      solids: [
+        { x: 0, y: 0, w: 1920, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 1896, y: 0, w: 24, h: 540 },
+        { x: 24, y: 420, w: 186, h: 120 },
+        { x: 470, y: 420, w: 240, h: 120 },
+        { x: 1220, y: 345, w: 170, h: 195 },
+        { x: 1545, y: 185, w: 351, h: 355 }
+      ],
+      boxes: [],
+      gaps: [
+        { cx: 590, y: 420, h: 125, wSmall: 88, wLarge: 200 },
+        { cx: 1685, y: 185, h: 360, wSmall: 86, wLarge: 206 }
+      ],
+      bridges: [
+        { cx: 340, cy: 422, wSmall: 70, wLarge: 210 },
+        { cx: 955, cy: 365, wSmall: 68, wLarge: 210 }
+      ],
+      winds: [
+        { x: 1410, y: 105, w: 105, h: 375 }
+      ],
+      hazards: [
+        { cx: 795, cy: 385, size: 44 },
+        { cx: 1140, cy: 345, size: 44 }
+      ],
+      enemies: [
+        { x: 1300, y: 345, minX: 1236, maxX: 1374, speed: 84, hp: 2 },
+        { x: 1805, y: 185, minX: 1742, maxX: 1876, speed: 88, hp: 3 }
+      ],
+      exit: { x: 1796, y: 141 }
+    },
+
+    // Level 11 — PRESSURE (Long Scrolling Level — 1920px)
+    {
+      num: '11',
+      name: 'PRESSURE',
+      width: 1920,
+      hint: 'LONG RUN: push boxes into position, cross the bridge, and vault the final updraft',
+      spawn: { x: 64, y: 438 },
+      solids: [
+        { x: 0, y: 0, w: 1920, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 1896, y: 0, w: 24, h: 540 },
+        { x: 24, y: 470, w: 516, h: 70 },
+        { x: 410, y: 325, w: 210, h: 24 },
+        { x: 1015, y: 420, w: 365, h: 120 },
+        { x: 1255, y: 275, w: 150, h: 24 },
+        { x: 1715, y: 205, w: 181, h: 335 }
+      ],
+      boxes: [
+        { cx: 190, bottom: 470 },
+        { cx: 1110, bottom: 420 }
+      ],
+      gaps: [],
+      bridges: [
+        { cx: 745, cy: 325, wSmall: 68, wLarge: 200 }
+      ],
+      winds: [
+        { x: 1445, y: 95, w: 110, h: 380 }
+      ],
+      hazards: [
+        { cx: 930, cy: 325, size: 44 },
+        { cx: 1625, cy: 205, size: 42 }
+      ],
+      enemies: [
+        { x: 1210, y: 420, minX: 1035, maxX: 1358, speed: 86, hp: 2 },
+        { x: 1810, y: 205, minX: 1732, maxX: 1878, speed: 88, hp: 3 }
+      ],
+      exit: { x: 1792, y: 161 }
+    },
+
+    // Level 12 — FINAL SHIFT (Epic Final Level — 2560px)
+    {
+      num: '12',
+      name: 'FINAL SHIFT',
+      width: 2560,
+      hint: 'FINALE: every mechanic combined — master lowercase and UPPERCASE to reach the final door',
+      spawn: { x: 64, y: 438 },
+      solids: [
+        { x: 0, y: 0, w: 2560, h: 24 },
+        { x: 0, y: 0, w: 24, h: 540 },
+        { x: 2536, y: 0, w: 24, h: 540 },
+        { x: 24, y: 470, w: 456, h: 70 },    // Stage 1 floor
+        { x: 370, y: 325, w: 180, h: 24 },   // Stage 1 lift deck
+        { x: 945, y: 365, w: 280, h: 175 },  // Stage 2 island with gap
+        { x: 1395, y: 215, w: 160, h: 24 },  // Stage 3 high deck
+        { x: 1945, y: 390, w: 220, h: 150 }, // Stage 4 gauntlet floor with gap
+        { x: 2315, y: 175, w: 221, h: 365 }  // Triumph exit balcony
+      ],
+      boxes: [
+        { cx: 175, bottom: 470 }
+      ],
+      gaps: [
+        { cx: 1085, y: 365, h: 180, wSmall: 86, wLarge: 210 },
+        { cx: 2055, y: 390, h: 155, wSmall: 84, wLarge: 185 }
+      ],
+      bridges: [
+        { cx: 675, cy: 325, wSmall: 68, wLarge: 200 },
+        { cx: 1690, cy: 215, wSmall: 68, wLarge: 214 }
+      ],
+      winds: [
+        { x: 1255, y: 110, w: 104, h: 365 },
+        { x: 2185, y: 95, w: 100, h: 365 }
+      ],
+      hazards: [
+        { cx: 860, cy: 325, size: 42 },
+        { cx: 1880, cy: 235, size: 42 }
+      ],
+      enemies: [
+        { x: 995, y: 365, minX: 960, maxX: 1032, speed: 76, hp: 2 },
+        { x: 1475, y: 215, minX: 1412, maxX: 1538, speed: 88, hp: 3 },
+        { x: 2410, y: 175, minX: 2330, maxX: 2510, speed: 96, hp: 4 }
+      ],
+      exit: { x: 2425, y: 131 }
+    }
+  ];
+
+  // ==================== GAME STATE ====================
+  const state = {
+    mode: 'title', // 'title' | 'playing' | 'level_clear' | 'victory'
+    levelIdx: 0,
+    levelWidth: CONFIG.WIDTH,
+    cameraX: 0,
+    shiftHeld: false,
+    shiftT: 0,        // linear 0..1
+    smoothT: 0,       // eased 0..1
+    shiftCount: 0,
+    deathCount: 0,
+    elapsedTime: 0,
+    levelClearTimer: 0,
+    shakeMag: 0,
+    shakeX: 0,
+    shakeY: 0,
+    flashAlpha: 0,
+    flashColor: '#ffffff',
+    keys: {
+      left: false,
+      right: false,
+      jumpHeld: false,
+      mouseFire: false
+    },
+    player: null,
+    terrainSolids: [],
+    boxes: [],
+    gaps: [],
+    bridges: [],
+    winds: [],
+    hazards: [],
+    enemies: [],
+    bullets: [],
+    exit: null,
+    particles: [],
+    time: 0
+  };
+
+  // DOM References
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const stageWrap = document.getElementById('stage-wrap');
+  const hud = document.getElementById('hud');
+  const hudLevelNum = document.getElementById('hud-level-num');
+  const hudLevelName = document.getElementById('hud-level-name');
+  const shiftIndicator = document.getElementById('shift-indicator');
+  const shiftIndicatorText = document.getElementById('shift-indicator-text');
+  const hudShifts = document.getElementById('hud-shifts');
+  const hudTimer = document.getElementById('hud-timer');
+  const levelSelect = document.getElementById('level-select');
+  const btnRestart = document.getElementById('btn-restart');
+  const btnMute = document.getElementById('btn-mute');
+  const titleOverlay = document.getElementById('title-overlay');
+  const titleLogo = document.getElementById('title-logo');
+  const btnPlay = document.getElementById('btn-play');
+  const victoryOverlay = document.getElementById('victory-overlay');
+  const vTime = document.getElementById('v-time');
+  const vShifts = document.getElementById('v-shifts');
+  const vDeaths = document.getElementById('v-deaths');
+  const btnPlayAgain = document.getElementById('btn-play-again');
+  const btnTitle = document.getElementById('btn-title');
+
+  // Populate Level Select Dropdown
+  LEVELS.forEach((lvl, i) => {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = `${lvl.num} — ${lvl.name}`;
+    levelSelect.appendChild(opt);
+  });
+
+  function formatTime(sec) {
+    const mins = Math.floor(sec / 60);
+    const rem = sec % 60;
+    const whole = Math.floor(rem);
+    const cs = Math.floor((rem - whole) * 100);
+    return `${String(mins).padStart(2, '0')}:${String(whole).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+  }
+
+  function addShake(amount) {
+    state.shakeMag = Math.max(state.shakeMag, amount);
+  }
+
+  function spawnParticles(x, y, count, color, opts = {}) {
+    const glyphs = opts.glyphs || null;
+    const speedMin = opts.speedMin ?? 30;
+    const speedMax = opts.speedMax ?? 140;
+    const lifeMin = opts.lifeMin ?? 0.22;
+    const lifeMax = opts.lifeMax ?? 0.55;
+    const gravity = opts.gravity ?? 260;
+    const size = opts.size ?? 3.5;
+
+    for (let i = 0; i < count; i++) {
+      const ang = opts.angle !== undefined
+        ? opts.angle + (Math.random() - 0.5) * (opts.spread ?? Math.PI)
+        : Math.random() * Math.PI * 2;
+      const spd = lerp(speedMin, speedMax, Math.random());
+      state.particles.push({
+        x,
+        y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd,
+        life: lerp(lifeMin, lifeMax, Math.random()),
+        maxLife: lifeMax,
+        color,
+        size: size * (0.7 + Math.random() * 0.6),
+        gravity,
+        glyph: glyphs ? glyphs[Math.floor(Math.random() * glyphs.length)] : null
+      });
+    }
+  }
+
+  function loadLevel(idx, preserveShift = false) {
+    state.levelIdx = clamp(idx, 0, LEVELS.length - 1);
+    const def = LEVELS[state.levelIdx];
+
+    if (!preserveShift) {
+      state.shiftT = state.shiftHeld ? 1 : 0;
+      state.smoothT = smoothstep(state.shiftT);
+    }
+
+    state.levelWidth = def.width || CONFIG.WIDTH;
+    state.player = ENTITIES.createPlayer(def.spawn);
+    const maxCam = Math.max(0, state.levelWidth - CONFIG.WIDTH);
+    state.cameraX = clamp(state.player.x + state.player.w / 2 - CONFIG.WIDTH * 0.35, 0, maxCam);
+    state.boxes = def.boxes.map(ENTITIES.createBox);
+    state.gaps = def.gaps.map(ENTITIES.createGap);
+    state.bridges = def.bridges.map(ENTITIES.createBridge);
+    state.winds = def.winds.map(ENTITIES.createWind);
+    state.hazards = def.hazards.map(ENTITIES.createHazard);
+    state.enemies = (def.enemies || []).map(ENTITIES.createEnemy);
+    state.bullets = [];
+    state.exit = ENTITIES.createExit(def.exit);
+    state.terrainSolids = PHYSICS.buildTerrainSolids(def.solids, state.gaps, state.smoothT);
+    state.particles = [];
+    state.levelClearTimer = 0;
+
+    // Immediately sync morphable entity geometry
+    updateMorphEntities(0);
+
+    // Update HUD
+    hudLevelNum.textContent = def.num;
+    hudLevelName.textContent = def.name;
+    levelSelect.value = String(state.levelIdx);
+  }
+
+  function triggerDeath() {
+    if (state.mode !== 'playing') return;
+    state.deathCount++;
+    AUDIO.playDeath();
+    addShake(4.5);
+    state.flashColor = CONFIG.COLORS.hazardStar;
+    state.flashAlpha = 0.28;
+
+    const px = state.player.x + state.player.w / 2;
+    const py = state.player.y + state.player.h / 2;
+    spawnParticles(px, py, 20, CONFIG.COLORS.hazardStar, {
+      speedMin: 60,
+      speedMax: 240,
+      lifeMin: 0.25,
+      lifeMax: 0.6,
+      glyphs: ['*', '!', 'x', '#']
+    });
+
+    const savedParticles = state.particles.slice();
+    loadLevel(state.levelIdx, false);
+    state.particles = savedParticles;
+  }
+
+  function triggerLevelComplete() {
+    if (state.mode !== 'playing') return;
+    state.mode = 'level_clear';
+    state.levelClearTimer = 0.68;
+    AUDIO.playLevelComplete();
+    addShake(3);
+    state.flashColor = CONFIG.COLORS.exitGlow;
+    state.flashAlpha = 0.24;
+
+    const ex = state.exit.x + state.exit.w / 2;
+    const ey = state.exit.y + state.exit.h / 2;
+    spawnParticles(ex, ey, 34, CONFIG.COLORS.exitGlow, {
+      speedMin: 70,
+      speedMax: 280,
+      lifeMin: 0.4,
+      lifeMax: 0.85,
+      gravity: 160,
+      glyphs: ['+', '*', '!', '^', '#']
+    });
+  }
+
+  function startNewRun(startIdx = 0) {
+    AUDIO.init();
+    state.shiftCount = 0;
+    state.deathCount = 0;
+    state.elapsedTime = 0;
+    hudShifts.textContent = '0';
+    hudTimer.textContent = '00:00.00';
+    titleOverlay.classList.add('hidden');
+    victoryOverlay.classList.add('hidden');
+    state.mode = 'playing';
+    loadLevel(startIdx, false);
+  }
+
+  function showVictory() {
+    state.mode = 'victory';
+    vTime.textContent = formatTime(state.elapsedTime);
+    vShifts.textContent = String(state.shiftCount);
+    vDeaths.textContent = String(state.deathCount);
+    victoryOverlay.classList.remove('hidden');
+  }
+
+  function firePlayerWeapon() {
+    if (state.mode !== 'playing' || !state.player) return;
+    const p = state.player;
+    if (p.shootCooldown > 0) return;
+    AUDIO.init();
+
+    const shifted = state.smoothT >= 0.5;
+    p.shootCooldown = shifted ? 0.24 : 0.16;
+    p.muzzleFlash = 0.09;
+
+    const dir = p.facing || 1;
+    const bx = p.x + p.w / 2 + dir * 24;
+    const by = p.y + p.h - 24;
+    const speed = shifted ? 740 : 620;
+
+    state.bullets.push({
+      x: bx,
+      y: by,
+      w: shifted ? 18 : 12,
+      h: shifted ? 6 : 4,
+      vx: dir * speed,
+      dir,
+      damage: shifted ? 2 : 1,
+      shifted,
+      life: 1.1
+    });
+
+    // Subtle kickback & muzzle sparks
+    p.vx -= dir * (shifted ? 36 : 18);
+    AUDIO.playShoot(shifted);
+    addShake(shifted ? 1.8 : 0.9);
+    spawnParticles(bx, by, shifted ? 7 : 4, shifted ? '#7ef9ff' : '#32dce8', {
+      angle: dir > 0 ? 0 : Math.PI,
+      spread: 0.65,
+      speedMin: 60,
+      speedMax: 160,
+      lifeMin: 0.08,
+      lifeMax: 0.18,
+      gravity: 0,
+      size: 3
+    });
+  }
+
+  function setShiftHeld(nextHeld) {
+    if (nextHeld === state.shiftHeld) return;
+    AUDIO.init();
+    state.shiftHeld = nextHeld;
+
+    if (nextHeld) {
+      AUDIO.playShiftPress();
+      if (state.mode === 'playing') {
+        state.shiftCount++;
+        hudShifts.textContent = String(state.shiftCount);
+      }
+      addShake(2.6);
+    } else {
+      AUDIO.playShiftRelease();
+      addShake(1.8);
+    }
+
+    // Visual Shift feedback on HUD, border & title logo
+    stageWrap.classList.toggle('shifted', nextHeld);
+    hud.classList.toggle('shifted', nextHeld);
+    shiftIndicator.classList.toggle('active', nextHeld);
+    shiftIndicatorText.textContent = nextHeld ? 'SHIFT: ACTIVE' : 'shift: idle';
+    titleLogo.textContent = nextHeld ? 'CASE SHIFT' : 'case shift';
+    titleLogo.classList.toggle('shifted', nextHeld);
+    titleOverlay.classList.toggle('shifted-bg', nextHeld);
+
+    // Burst dust around player on shift
+    if (state.mode === 'playing' && state.player) {
+      spawnParticles(
+        state.player.x + state.player.w / 2,
+        state.player.y + state.player.h / 2,
+        8,
+        nextHeld ? CONFIG.COLORS.playerUpper : '#8b949e',
+        { speedMin: 35, speedMax: 110, lifeMin: 0.16, lifeMax: 0.34, gravity: 40 }
+      );
+    }
+  }
+
+  function updateMorphEntities(dt) {
+    const def = LEVELS[state.levelIdx];
+    const t = state.smoothT;
+
+    // 1. Rebuild terrain with smoothly carved gaps
+    for (const gap of state.gaps) {
+      gap.curW = lerp(gap.wSmall, gap.wLarge, t);
+    }
+    state.terrainSolids = PHYSICS.buildTerrainSolids(def.solids, state.gaps, t);
+
+    // 2. Smoothly morph bridges (center-anchored)
+    for (const br of state.bridges) {
+      br.w = lerp(br.wSmall, br.wLarge, t);
+      br.h = lerp(br.hSmall, br.hLarge, t);
+      br.x = br.cx - br.w / 2;
+      br.y = br.cy - br.h / 2;
+    }
+
+    // 3. Smoothly morph boxes (bottom-center anchored, clamped to walls)
+    const staticAndBridges = state.terrainSolids.concat(state.bridges);
+    for (const box of state.boxes) {
+      box.prevX = box.x;
+      box.prevY = box.y;
+      box.prevW = box.w;
+
+      box.w = lerp(CONFIG.BOX_SMALL_W, CONFIG.BOX_LARGE_W, t);
+      box.h = lerp(CONFIG.BOX_SMALL_H, CONFIG.BOX_LARGE_H, t);
+      box.x = box.cx - box.w / 2;
+      box.y = box.bottom - box.h;
+
+      // Apply gravity to box so it rests solidly on floors
+      if (dt > 0) {
+        box.vy = Math.min(box.vy + CONFIG.GRAVITY * dt, CONFIG.MAX_FALL);
+        box.y += box.vy * dt;
+        box.bottom = box.y + box.h;
+
+        for (const s of staticAndBridges) {
+          if (PHYSICS.aabb(box, s)) {
+            if (box.vy >= 0) {
+              box.y = s.y - box.h;
+              box.bottom = s.y;
+              box.vy = 0;
+            }
+          }
+        }
+      }
+
+      // Prevent expanding box from clipping into side walls
+      for (const s of state.terrainSolids) {
+        if (!PHYSICS.aabb(box, s)) continue;
+        // Ignore floor beneath box
+        if (Math.abs(box.bottom - s.y) < 3) continue;
+        const overlapL = (box.x + box.w) - s.x;
+        const overlapR = (s.x + s.w) - box.x;
+        if (overlapL < overlapR) {
+          box.x -= overlapL;
+        } else {
+          box.x += overlapR;
+        }
+        box.cx = box.x + box.w / 2;
+      }
+    }
+
+    // 4. Spin hazards when shifted
+    for (const hz of state.hazards) {
+      const spinSpeed = lerp(0, 8.5, t);
+      hz.angle += spinSpeed * dt;
+    }
+
+    // 5. Animate wind ASCII streaks
+    for (const w of state.winds) {
+      const speedMult = lerp(0.45, 3.2, t);
+      for (const p of w.particles) {
+        p.ry -= p.speed * speedMult * dt;
+        if (p.ry < 0) {
+          p.ry += 1;
+          p.rx = Math.random();
+        }
+      }
+    }
+
+    // 6. Animate exit sci-fi door (proximity sensor open + portal pulse + warp)
+    if (state.exit) {
+      const ex = state.exit;
+      ex.pulse += dt * 3.4;
+
+      let targetOpen = 0;
+      if (state.mode === 'level_clear') {
+        targetOpen = 1;
+        ex.warpT = Math.min(1, ex.warpT + dt * 2.2);
+      } else if (state.player) {
+        const dx = (state.player.x + state.player.w / 2) - (ex.x + ex.w / 2);
+        const dy = (state.player.y + state.player.h / 2) - (ex.y + ex.h / 2);
+        const dist = Math.hypot(dx, dy);
+        if (dist < 145) {
+          targetOpen = 1;
+        }
+      }
+
+      if (targetOpen === 1 && !ex.wasOpen && state.mode === 'playing') {
+        ex.wasOpen = true;
+        AUDIO.playDoorOpen();
+      } else if (targetOpen === 0 && ex.openT < 0.08) {
+        ex.wasOpen = false;
+      }
+
+      ex.openT = lerp(ex.openT, targetOpen, Math.min(1, dt * 10));
+    }
+  }
+
+  function stepSimulation(dt) {
+    state.time += dt;
+
+    // Decay screen shake & flash
+    if (state.shakeMag > 0.05) {
+      state.shakeX = (Math.random() * 2 - 1) * state.shakeMag;
+      state.shakeY = (Math.random() * 2 - 1) * state.shakeMag;
+      state.shakeMag *= Math.pow(0.0015, dt);
+    } else {
+      state.shakeMag = 0;
+      state.shakeX = 0;
+      state.shakeY = 0;
+    }
+    if (state.flashAlpha > 0) {
+      state.flashAlpha = Math.max(0, state.flashAlpha - dt * 1.4);
+    }
+
+    // Update particles regardless of mode
+    for (let i = state.particles.length - 1; i >= 0; i--) {
+      const p = state.particles[i];
+      p.life -= dt;
+      if (p.life <= 0) {
+        state.particles.splice(i, 1);
+        continue;
+      }
+      p.vy += p.gravity * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+
+    // Smoothly interpolate Shift factor over 110ms
+    const targetT = state.shiftHeld ? 1 : 0;
+    if (state.shiftT !== targetT) {
+      const rate = 1 / CONFIG.SHIFT_DURATION;
+      if (state.shiftT < targetT) {
+        state.shiftT = Math.min(1, state.shiftT + rate * dt);
+      } else {
+        state.shiftT = Math.max(0, state.shiftT - rate * dt);
+      }
+    }
+    state.smoothT = smoothstep(state.shiftT);
+
+    if (state.mode === 'level_clear') {
+      updateMorphEntities(dt);
+      if (state.player && state.exit) {
+        const targetX = state.exit.x + state.exit.w / 2 - state.player.w / 2;
+        const targetY = state.exit.y + state.exit.h - state.player.h;
+        state.player.x = lerp(state.player.x, targetX, Math.min(1, dt * 10));
+        state.player.y = lerp(state.player.y, targetY, Math.min(1, dt * 10));
+        state.player.scaleX = lerp(state.player.scaleX, 0.05, Math.min(1, dt * 5));
+        state.player.scaleY = lerp(state.player.scaleY, 1.45, Math.min(1, dt * 5));
+      }
+      state.levelClearTimer -= dt;
+      if (state.levelClearTimer <= 0) {
+        if (state.levelIdx + 1 < LEVELS.length) {
+          state.mode = 'playing';
+          loadLevel(state.levelIdx + 1, false);
+        } else {
+          showVictory();
+        }
+      }
+      return;
+    }
+
+    if (state.mode !== 'playing') {
+      updateMorphEntities(dt);
+      return;
+    }
+
+    // Active gameplay timer
+    state.elapsedTime += dt;
+    hudTimer.textContent = formatTime(state.elapsedTime);
+
+    const p = state.player;
+    const prevPlayerBottom = p.y + p.h;
+
+    // Morph all world entities first
+    updateMorphEntities(dt);
+
+    // Ride smoothly on top of expanding BOX
+    for (const box of state.boxes) {
+      const horizOverlap = (p.x + p.w > box.x + 2) && (p.x < box.x + box.w - 2);
+      const wasAboveOrOnTop = prevPlayerBottom <= box.prevY + 10;
+      if (horizOverlap && wasAboveOrOnTop && p.y + p.h >= box.y - 3 && p.vy >= -40) {
+        p.y = box.y - p.h;
+        if (p.vy > 0) p.vy = 0;
+        p.onGround = true;
+      }
+    }
+
+    // Build active solid list (terrain + bridges + boxes + safe '8' blocks)
+    const activeSolids = state.terrainSolids.concat(state.bridges, state.boxes);
+    const hazardIsLethal = state.smoothT >= CONFIG.HAZARD_ACTIVE_T;
+    if (!hazardIsLethal) {
+      for (const hz of state.hazards) {
+        activeSolids.push(hz);
+      }
+    }
+
+    // Anti-clipping & crush safety after world morph
+    const safeAfterMorph = PHYSICS.resolveOverlaps(p, activeSolids);
+    if (!safeAfterMorph) {
+      triggerDeath();
+      return;
+    }
+
+    // Horizontal movement input
+    const moveDir = (state.keys.right ? 1 : 0) - (state.keys.left ? 1 : 0);
+    if (moveDir !== 0) {
+      p.facing = moveDir;
+      const accel = p.onGround ? CONFIG.GROUND_ACCEL : CONFIG.AIR_ACCEL;
+      p.vx += moveDir * accel * dt;
+      if (Math.abs(p.vx) > CONFIG.MOVE_SPEED) {
+        p.vx = Math.sign(p.vx) * CONFIG.MOVE_SPEED;
+      }
+    } else {
+      const decel = p.onGround ? CONFIG.GROUND_DECEL : CONFIG.AIR_DECEL;
+      if (Math.abs(p.vx) <= decel * dt) {
+        p.vx = 0;
+      } else {
+        p.vx -= Math.sign(p.vx) * decel * dt;
+      }
+    }
+
+    // Pushing lowercase `box` when t < 0.25
+    if (state.smoothT < 0.25 && moveDir !== 0) {
+      const probe = {
+        x: p.x + moveDir * 3,
+        y: p.y + 3,
+        w: p.w,
+        h: p.h - 6
+      };
+      const blockObstacles = state.terrainSolids.concat(state.bridges);
+      for (const box of state.boxes) {
+        if (PHYSICS.aabb(probe, box)) {
+          const pushDx = moveDir * CONFIG.BOX_PUSH_SPEED * dt;
+          const nextBox = { x: box.x + pushDx, y: box.y, w: box.w, h: box.h };
+          const blocked = blockObstacles.some(s =>
+            Math.abs(box.bottom - s.y) > 3 && PHYSICS.aabb(nextBox, s)
+          );
+          if (!blocked) {
+            box.x += pushDx;
+            box.cx = box.x + box.w / 2;
+            p.vx = moveDir * CONFIG.BOX_PUSH_SPEED;
+          }
+        }
+      }
+    }
+
+    // Coyote time & jump buffer
+    if (p.onGround) {
+      p.coyoteTimer = CONFIG.COYOTE_TIME;
+    } else {
+      p.coyoteTimer = Math.max(0, p.coyoteTimer - dt);
+    }
+
+    if (p.jumpBufferTimer > 0) {
+      p.jumpBufferTimer = Math.max(0, p.jumpBufferTimer - dt);
+    }
+
+    // Execute jump
+    if (p.jumpBufferTimer > 0 && p.coyoteTimer > 0) {
+      p.vy = CONFIG.JUMP_VEL;
+      p.onGround = false;
+      p.coyoteTimer = 0;
+      p.jumpBufferTimer = 0;
+      p.scaleX = 0.78;
+      p.scaleY = 1.28;
+      AUDIO.playJump();
+      p.jetFlame = 1.0;
+      spawnParticles(p.x + p.w / 2 - p.facing * 12, p.y + p.h - 14, 9, '#ff9f1c', {
+        angle: p.facing > 0 ? Math.PI : 0,
+        spread: 0.9,
+        speedMin: 55,
+        speedMax: 165,
+        lifeMin: 0.14,
+        lifeMax: 0.34,
+        gravity: 80,
+        size: 3.5
+      });
+    }
+
+    // Wind zone forces
+    p.inWind = false;
+    for (const w of state.winds) {
+      if (PHYSICS.aabb(p, w)) {
+        p.inWind = true;
+        const upAccel = lerp(CONFIG.WIND_GENTLE_ACCEL, CONFIG.WIND_STRONG_ACCEL, state.smoothT);
+        p.vy -= upAccel * dt;
+        if (state.smoothT > 0.5 && p.vy < CONFIG.WIND_MAX_UP_VEL) {
+          p.vy = CONFIG.WIND_MAX_UP_VEL;
+        }
+      }
+    }
+
+    // Gravity
+    p.vy = Math.min(p.vy + CONFIG.GRAVITY * dt, CONFIG.MAX_FALL);
+
+    // Move & collide
+    const wasOnGround = p.onGround;
+    const preVy = p.vy;
+    const res = PHYSICS.moveAndCollide(p, activeSolids, dt);
+
+    // Ground probe (1px beneath feet)
+    const feetProbe = { x: p.x + 2, y: p.y + p.h, w: p.w - 4, h: 2 };
+    p.onGround = res.landed || activeSolids.some(s => PHYSICS.aabb(feetProbe, s));
+
+    // Landing juice
+    if (!wasOnGround && p.onGround && preVy > 110) {
+      p.scaleX = 1.26;
+      p.scaleY = 0.76;
+      AUDIO.playLand();
+      if (preVy > 460) addShake(1.6);
+      spawnParticles(p.x + p.w / 2, p.y + p.h, 6, '#8b949e', {
+        angle: -Math.PI / 2,
+        spread: Math.PI,
+        speedMin: 25,
+        speedMax: 90,
+        lifeMin: 0.12,
+        lifeMax: 0.28
+      });
+    }
+
+    // Running dust
+    if (p.onGround && Math.abs(p.vx) > 120) {
+      p.runDustTimer -= dt;
+      if (p.runDustTimer <= 0) {
+        p.runDustTimer = 0.11;
+        spawnParticles(p.x + p.w / 2 - p.facing * 10, p.y + p.h - 2, 2, '#6e7681', {
+          angle: -Math.PI / 2,
+          spread: 1.0,
+          speedMin: 15,
+          speedMax: 45,
+          lifeMin: 0.12,
+          lifeMax: 0.25,
+          size: 2.5
+        });
+      }
+    }
+
+    // Spring squash & stretch back to (1, 1)
+    p.scaleX = lerp(p.scaleX, 1, Math.min(1, dt * 14));
+    p.scaleY = lerp(p.scaleY, 1, Math.min(1, dt * 14));
+
+    // Character animation state & jetpack flame intensity
+    const speedRatio = Math.min(1, Math.abs(p.vx) / CONFIG.MOVE_SPEED);
+    if (!p.onGround) {
+      p.animState = p.vy < 40 ? 'jump' : 'fall';
+      p.animTime += dt * 10;
+    } else if (Math.abs(p.vx) > 22) {
+      p.animState = 'run';
+      p.animTime += dt * (7.5 + speedRatio * 5.5);
+    } else {
+      p.animState = 'idle';
+      p.animTime += dt * 3.2;
+    }
+
+    const targetFlame =
+      p.inWind ? 1.0 :
+      p.animState === 'jump' ? 0.98 :
+      p.animState === 'fall' ? 0.42 :
+      p.animState === 'run' ? (0.48 + speedRatio * 0.38) :
+      0.16;
+    p.jetFlame = lerp(p.jetFlame, targetFlame, Math.min(1, dt * 16));
+
+    // Jetpack flame ember trail
+    if (p.jetFlame > 0.38) {
+      p.jetSparkTimer -= dt;
+      if (p.jetSparkTimer <= 0) {
+        p.jetSparkTimer = p.animState === 'jump' || p.inWind ? 0.035 : 0.075;
+        const nozzleX = p.x + p.w / 2 - p.facing * 16;
+        const nozzleY = p.y + p.h - 24;
+        const emberCol = state.smoothT > 0.5 && Math.random() < 0.45
+          ? '#6cf8ff'
+          : (Math.random() < 0.5 ? '#ffcf5c' : '#ff6b2b');
+        spawnParticles(nozzleX, nozzleY, 1, emberCol, {
+          angle: (p.facing > 0 ? Math.PI : 0) + (Math.random() - 0.5) * 0.35,
+          spread: 0.35,
+          speedMin: 45,
+          speedMax: 115,
+          lifeMin: 0.12,
+          lifeMax: 0.24,
+          gravity: -20,
+          size: 3
+        });
+      }
+    }
+
+    // Hazard collision ('*' sawblade)
+    if (hazardIsLethal) {
+      for (const hz of state.hazards) {
+        const inset = 6; // forgiving hitbox
+        const hitbox = {
+          x: hz.x + inset,
+          y: hz.y + inset,
+          w: hz.w - inset * 2,
+          h: hz.h - inset * 2
+        };
+        if (PHYSICS.aabb(p, hitbox)) {
+          triggerDeath();
+          return;
+        }
+      }
+    }
+
+    // Decrement weapon timers & support hold-to-fire on Left Mouse Click
+    if (p.shootCooldown > 0) p.shootCooldown = Math.max(0, p.shootCooldown - dt);
+    if (p.muzzleFlash > 0) p.muzzleFlash = Math.max(0, p.muzzleFlash - dt);
+    if (state.keys.mouseFire && p.shootCooldown <= 0) {
+      firePlayerWeapon();
+    }
+
+    // Update patrolling `guard` <-> `GUARD` enemies
+    const enemySpeedMult = lerp(1.0, 1.85, state.smoothT);
+    for (const en of state.enemies) {
+      if (!en.alive) continue;
+      en.bobPhase += dt * lerp(4.0, 7.5, state.smoothT);
+      if (en.hitFlash > 0) en.hitFlash = Math.max(0, en.hitFlash - dt);
+
+      en.w = lerp(en.wSmall, en.wLarge, state.smoothT);
+      en.h = lerp(en.hSmall, en.hLarge, state.smoothT);
+
+      en.cx += en.dir * en.baseSpeed * enemySpeedMult * dt;
+      if (en.cx >= en.maxX) {
+        en.cx = en.maxX;
+        en.dir = -1;
+      } else if (en.cx <= en.minX) {
+        en.cx = en.minX;
+        en.dir = 1;
+      }
+
+      en.x = en.cx - en.w / 2;
+      en.y = en.bottom - en.h;
+
+      // Contact hazard check (slightly forgiving inset)
+      const eHitbox = { x: en.x + 4, y: en.y + 4, w: en.w - 8, h: en.h - 6 };
+      if (PHYSICS.aabb(p, eHitbox)) {
+        triggerDeath();
+        return;
+      }
+    }
+
+    // Update plasma bullets & enemy hit detection
+    for (let i = state.bullets.length - 1; i >= 0; i--) {
+      const b = state.bullets[i];
+      b.life -= dt;
+      b.x += b.vx * dt;
+
+      if (b.life <= 0 || b.x < 0 || b.x > state.levelWidth) {
+        state.bullets.splice(i, 1);
+        continue;
+      }
+
+      const bBox = { x: b.x - b.w / 2, y: b.y - b.h / 2, w: b.w, h: b.h };
+
+      // Check collision with enemies
+      let hitSomething = false;
+      for (const en of state.enemies) {
+        if (!en.alive) continue;
+        if (PHYSICS.aabb(bBox, en)) {
+          hitSomething = true;
+          en.hp -= b.damage;
+          en.hitFlash = 0.12;
+          if (en.hp <= 0) {
+            en.alive = false;
+            AUDIO.playEnemyDestroy();
+            addShake(3.2);
+            spawnParticles(en.cx, en.y + en.h / 2, 18, '#ff5678', {
+              speedMin: 60,
+              speedMax: 220,
+              lifeMin: 0.22,
+              lifeMax: 0.55,
+              glyphs: ['*', '#', 'x', '!']
+            });
+            spawnParticles(en.cx, en.y + en.h / 2, 10, '#7ef9ff', {
+              speedMin: 40,
+              speedMax: 160,
+              lifeMin: 0.16,
+              lifeMax: 0.36
+            });
+          } else {
+            AUDIO.playEnemyHit();
+            spawnParticles(b.x, b.y, 7, '#ff9f5a', {
+              speedMin: 45,
+              speedMax: 140,
+              lifeMin: 0.12,
+              lifeMax: 0.28
+            });
+          }
+          break;
+        }
+      }
+
+      // Check collision with solid terrain / boxes
+      if (!hitSomething) {
+        for (const s of activeSolids) {
+          if (PHYSICS.aabb(bBox, s)) {
+            hitSomething = true;
+            spawnParticles(b.x, b.y, 5, b.shifted ? '#7ef9ff' : '#32dce8', {
+              speedMin: 30,
+              speedMax: 110,
+              lifeMin: 0.08,
+              lifeMax: 0.2,
+              gravity: 60
+            });
+            break;
+          }
+        }
+      }
+
+      if (hitSomething) {
+        state.bullets.splice(i, 1);
+      }
+    }
+
+    // Pit fall reset
+    if (p.y > CONFIG.HEIGHT + 30) {
+      triggerDeath();
+      return;
+    }
+
+    // Smooth horizontal camera tracking for long levels
+    const maxCam = Math.max(0, state.levelWidth - CONFIG.WIDTH);
+    if (maxCam > 0) {
+      const lookAhead = p.facing * 72;
+      const targetCam = clamp(p.x + p.w / 2 + lookAhead - CONFIG.WIDTH * 0.44, 0, maxCam);
+      state.cameraX = lerp(state.cameraX, targetCam, Math.min(1, dt * 7.5));
+    } else {
+      state.cameraX = 0;
+    }
+
+    // Goal check ('exit' / 'EXIT')
+    if (state.exit && PHYSICS.aabb(p, state.exit)) {
+      triggerLevelComplete();
+    }
+  }
+
+  // ==================== RENDERER ====================
+  function drawRoundedRect(x, y, w, h, r) {
+    const rad = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rad, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rad);
+    ctx.arcTo(x + w, y + h, x, y + h, rad);
+    ctx.arcTo(x, y + h, x, y, rad);
+    ctx.arcTo(x, y, x + w, y, rad);
+    ctx.closePath();
+  }
+
+  function drawGuardEnemy(ctx, en, t, globalTime) {
+    if (!en.alive) return;
+    const shifted = t >= 0.5;
+    const dir = en.dir || 1;
+    const px = 2; // Crisp 2x pixel grid matching the player sprite
+    const rect = (x, y, w, h, color) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(Math.round(x) * px, Math.round(y) * px, Math.round(w) * px, Math.round(h) * px);
+    };
+
+    const flash = en.hitFlash > 0;
+    const stride = Math.sin(en.bobPhase * 1.45);
+    const lift = Math.cos(en.bobPhase * 1.45);
+    const bobY = -Math.abs(stride) * 1.1;
+
+    // Crimson Cyber-Trooper palette (obsidian armor, crimson plates, glowing scarlet visor)
+    const C = flash ? {
+      outline: '#ffffff',
+      armorDark: '#ffd6de',
+      armorMid: '#ffffff',
+      armorHi: '#ffffff',
+      crimsonDark: '#ff8fa3',
+      crimsonMid: '#ffffff',
+      crimsonHi: '#ffffff',
+      visor: '#ffffff',
+      core: '#ffffff'
+    } : {
+      outline: '#100c12',
+      armorDark: '#1d1c26',
+      armorMid: '#363547',
+      armorHi: '#5b5a73',
+      crimsonDark: shifted ? '#9e1330' : '#7d1c28',
+      crimsonMid: shifted ? '#ff2a55' : '#cf3448',
+      crimsonHi: shifted ? '#ff708d' : '#f25c6e',
+      visor: shifted ? '#ff335c' : '#ff6b57',
+      core: shifted ? '#ffb3c1' : '#ff9980'
+    };
+
+    const scale = lerp(1.0, 1.32, t);
+
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    // Anchor flush to patrol surface (en.bottom)
+    ctx.translate(en.cx, en.bottom);
+    ctx.scale(dir * scale, scale);
+
+    if (shifted || flash) {
+      ctx.shadowColor = flash ? '#ffffff' : '#ff2a55';
+      ctx.shadowBlur = flash ? 16 : 11;
+    }
+
+    const oy = bobY;
+
+    // --- 1. REAR THRUSTER PACK & ANTENNA FIN ---
+    rect(-8, -17 + oy, 4, 8, C.armorDark);
+    rect(-7, -16 + oy, 2, 6, C.armorMid);
+    // Glowing crimson vent core on backpack
+    rect(-8, -15 + oy, 1, 4, C.visor);
+    // Twin angled comms horns on back
+    rect(-6, -22 + oy, 1, 5, C.armorHi);
+    rect(-6, -23 + oy, 1, 1, C.crimsonHi);
+
+    // --- 2. BACK MECH LEG (animated march) ---
+    const bStepX = Math.round(-2 - stride * 3.0);
+    const bStepY = lift < 0 ? Math.round(lift * 1.5) : 0;
+    rect(bStepX, -8 + oy * 0.5, 3, 4, C.armorDark);
+    rect(bStepX - 1, -4 + bStepY, 3, 2, C.crimsonDark);
+    rect(bStepX - 1, -2 + bStepY, 4, 2, C.armorDark);
+
+    // --- 3. HEAVY TORSO & ARMORED CHESTPLATE ---
+    rect(-5, -16 + oy, 9, 9, C.outline);
+    rect(-4, -15 + oy, 7, 7, C.armorDark);
+    // Crimson armored chest core
+    rect(-2, -14 + oy, 4, 4, C.crimsonDark);
+    rect(-1, -13 + oy, 3, 2, C.crimsonMid);
+    rect(0, -13 + oy, 1, 1, C.core);
+    // Spiked shoulder pauldron
+    rect(-4, -16 + oy, 5, 2, C.crimsonMid);
+    rect(-3, -17 + oy, 3, 1, C.crimsonHi);
+    // Tactical belt
+    rect(-4, -9 + oy, 7, 2, C.armorMid);
+    rect(0, -9 + oy, 2, 2, C.visor);
+
+    // --- 4. FRONT MECH LEG (animated march) ---
+    const fStepX = Math.round(0 + stride * 3.0);
+    const fStepY = lift > 0 ? Math.round(-lift * 1.5) : 0;
+    rect(fStepX, -8 + oy * 0.5, 3, 4, C.armorMid);
+    rect(fStepX + 1, -5 + fStepY, 3, 2, C.crimsonMid);
+    rect(fStepX, -2 + fStepY, 4, 2, C.armorDark);
+    rect(fStepX + 2, -2 + fStepY, 2, 1, C.armorHi);
+
+    // --- 5. ANGULAR CYBER-SENTINEL HELMET & SWEEPING VISOR ---
+    const hy = -23 + oy;
+    rect(-4, hy, 8, 7, C.outline);
+    rect(-3, hy + 1, 6, 5, C.armorMid);
+    // Crimson forehead crest
+    rect(-2, hy, 5, 2, C.crimsonMid);
+    rect(-1, hy, 3, 1, C.crimsonHi);
+    // Dark visor slit
+    rect(0, hy + 2, 5, 3, '#0b060a');
+    // Glowing cyclops scanner eye (pulses/sweeps subtly)
+    const eyeShift = Math.round(Math.sin(globalTime * 6 + en.bobPhase) * 0.7);
+    ctx.save();
+    ctx.shadowColor = C.visor;
+    ctx.shadowBlur = shifted ? 12 : 7;
+    rect(2 + eyeShift, hy + 2, 2, 2, C.visor);
+    rect(2 + eyeShift, hy + 3, 1, 1, C.core);
+    ctx.restore();
+
+    // --- 6. HEAVY CRIMSON PLASMA ARM CANNON ---
+    const gy = -13 + oy;
+    rect(2, gy, 5, 3, C.armorDark);
+    rect(3, gy, 4, 1, C.armorHi);
+    // Twin cannon barrel + glowing crimson plasma rail
+    rect(6, gy - 1, 5, 2, C.armorMid);
+    rect(6, gy + 1, 5, 2, C.crimsonDark);
+    rect(7, gy + 1, 4, 1, C.visor);
+    // Glowing muzzle tip
+    rect(11, gy, 1, 2, C.core);
+
+    ctx.restore();
+
+    // Crisp floating `guard` / `GUARD` typographic tag + health bar
+    ctx.save();
+    const topY = en.bottom - (26 * scale);
+    if (en.hp < en.maxHp) {
+      const bw = 34 * scale;
+      const bx = en.cx - bw / 2;
+      ctx.fillStyle = 'rgba(10, 14, 20, 0.85)';
+      ctx.fillRect(bx, topY - 8, bw, 4);
+      ctx.fillStyle = '#ff4d6d';
+      ctx.fillRect(bx, topY - 8, bw * Math.max(0, en.hp / en.maxHp), 4);
+    }
+
+    ctx.font = `800 ${shifted ? 10 : 9}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = shifted ? 'rgba(255, 130, 155, 0.92)' : 'rgba(242, 128, 118, 0.72)';
+    ctx.fillText(shifted ? 'GUARD' : 'guard', en.cx, topY - (en.hp < en.maxHp ? 11 : 2));
+    ctx.restore();
+  }
+
+  function drawSciFiBox(ctx, box, t, globalTime) {
+    const shifted = t >= 0.5;
+    const x = box.x;
+    const y = box.y;
+    const w = box.w;
+    const h = box.h;
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    const pulse = 0.5 + 0.5 * Math.sin(globalTime * 4.2);
+
+    const amber = shifted ? '#ffd76a' : '#e5b94c';
+    const amberGlow = 'rgba(255, 207, 92,';
+    const cham = lerp(4, 9, t);
+
+    ctx.save();
+
+    // 1. Floor interaction glow: subtle cyan anti-grav cushion when lightweight (`box`),
+    //    or heavy amber magnetic anchor lock flare when expanded (`BOX`)
+    if (t < 0.45) {
+      const hoverA = (1 - t / 0.45) * (0.28 + 0.14 * pulse);
+      ctx.fillStyle = `rgba(56, 232, 245, ${hoverA})`;
+      ctx.fillRect(x + 5, y + h - 1.5, w - 10, 3);
+    } else {
+      const lockA = ((t - 0.45) / 0.55) * 0.45;
+      ctx.fillStyle = `${amberGlow} ${lockA})`;
+      ctx.fillRect(x - 3, y + h - 2, w + 6, 3.5);
+    }
+
+    // 2. Main Chamfered Armored Chassis
+    ctx.beginPath();
+    ctx.moveTo(x + cham, y);
+    ctx.lineTo(x + w - cham, y);
+    ctx.lineTo(x + w, y + cham);
+    ctx.lineTo(x + w, y + h - cham);
+    ctx.lineTo(x + w - cham, y + h);
+    ctx.lineTo(x + cham, y + h);
+    ctx.lineTo(x, y + h - cham);
+    ctx.lineTo(x, y + cham);
+    ctx.closePath();
+
+    const bodyGrad = ctx.createLinearGradient(x, y, x, y + h);
+    bodyGrad.addColorStop(0, shifted ? '#232c36' : '#18242e');
+    bodyGrad.addColorStop(0.5, shifted ? '#171f27' : '#111a22');
+    bodyGrad.addColorStop(1, '#0c131a');
+    ctx.fillStyle = bodyGrad;
+    if (t > 0.25) {
+      ctx.shadowColor = 'rgba(255, 207, 92, 0.35)';
+      ctx.shadowBlur = 12 * t;
+    }
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle = amber;
+    ctx.lineWidth = lerp(1.8, 2.6, t);
+    ctx.stroke();
+
+    // 3. Clipped Interior Tech Details (armored cross-struts, hazard base, hydraulic seams)
+    ctx.save();
+    ctx.clip();
+
+    // Top metallic bevel highlight
+    ctx.fillStyle = 'rgba(255, 230, 160, 0.14)';
+    ctx.fillRect(x, y, w, 4);
+
+    // Expanding heavy industrial details as BOX grows
+    if (t > 0.15) {
+      const a = smoothstep((t - 0.15) / 0.85);
+
+      // Diagonal hydraulic expansion struts from corners to center core
+      ctx.strokeStyle = `${amberGlow} ${0.28 * a})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + 4, y + 4);
+      ctx.lineTo(x + w - 4, y + h - 4);
+      ctx.moveTo(x + w - 4, y + 4);
+      ctx.lineTo(x + 4, y + h - 4);
+      ctx.stroke();
+
+      // Industrial hazard chevron strip along bottom base
+      const stripH = 7 * a;
+      ctx.fillStyle = `rgba(255, 207, 92, ${0.22 * a})`;
+      ctx.fillRect(x, y + h - stripH, w, stripH);
+      ctx.strokeStyle = `rgba(12, 19, 26, ${0.85 * a})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      for (let sx = x - 10; sx < x + w + 12; sx += 11) {
+        ctx.moveTo(sx, y + h);
+        ctx.lineTo(sx + 6, y + h - stripH);
+      }
+      ctx.stroke();
+
+      // Side energy conduit bars
+      ctx.fillStyle = `${amberGlow} ${(0.55 + 0.35 * pulse) * a})`;
+      ctx.fillRect(x + 4, y + 14, 3, h - 28);
+      ctx.fillRect(x + w - 7, y + 14, 3, h - 28);
+    }
+
+    // Inner recessed core plate
+    const padX = lerp(5, 14, t);
+    const padY = lerp(5, 13, t);
+    ctx.fillStyle = shifted ? 'rgba(38, 30, 14, 0.88)' : 'rgba(14, 28, 36, 0.85)';
+    drawRoundedRect(x + padX, y + padY, Math.max(12, w - padX * 2), Math.max(12, h - padY * 2), 4);
+    ctx.fill();
+    ctx.strokeStyle = shifted ? `${amberGlow} 0.65)` : 'rgba(56, 232, 245, 0.45)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    ctx.restore(); // end interior clip
+
+    // 4. Corner Clamp Brackets (heavy magnetic locks)
+    const brk = lerp(4, 9, t);
+    ctx.strokeStyle = shifted ? '#fff0b8' : '#7eeef5';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    // Top-left
+    ctx.moveTo(x + 2, y + brk + 2); ctx.lineTo(x + 2, y + 2); ctx.lineTo(x + brk + 2, y + 2);
+    // Top-right
+    ctx.moveTo(x + w - brk - 2, y + 2); ctx.lineTo(x + w - 2, y + 2); ctx.lineTo(x + w - 2, y + brk + 2);
+    // Bottom-left
+    ctx.moveTo(x + 2, y + h - brk - 2); ctx.lineTo(x + 2, y + h - 2); ctx.lineTo(x + brk + 2, y + h - 2);
+    // Bottom-right
+    ctx.moveTo(x + w - brk - 2, y + h - 2); ctx.lineTo(x + w - 2, y + h - 2); ctx.lineTo(x + w - 2, y + h - brk - 2);
+    ctx.stroke();
+
+    // 5. Crisp Stencil Typography (`box` / `BOX`)
+    ctx.font = `800 ${Math.round(lerp(11, 24, t))}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = shifted ? '#ffe494' : '#e6f7fa';
+    if (shifted) {
+      ctx.shadowColor = 'rgba(255, 207, 92, 0.7)';
+      ctx.shadowBlur = 8;
+    }
+    ctx.fillText(shifted ? 'BOX' : 'box', cx, cy + 0.5);
+
+    ctx.restore();
+  }
+
+  function drawSpaceBridge(ctx, br, t, globalTime) {
+    const shifted = t >= 0.5;
+    const x = br.x;
+    const y = br.y;
+    const w = br.w;
+    const h = br.h;
+    const cx = br.cx;
+    const cy = br.cy;
+
+    const coreCol = shifted ? '#7ef9ff' : '#32dce8';
+    const railCol = shifted ? '#d8feff' : '#7eeef5';
+    const glowRgba = shifted ? 'rgba(94, 242, 255,' : 'rgba(50, 220, 232,';
+
+    ctx.save();
+
+    // 1. Soft holographic light-field underglow
+    const underGrad = ctx.createLinearGradient(cx, y, cx, y + h + 18);
+    underGrad.addColorStop(0, `${glowRgba} ${lerp(0.16, 0.32, t)})`);
+    underGrad.addColorStop(1, `${glowRgba} 0)`);
+    ctx.fillStyle = underGrad;
+    ctx.fillRect(x + 4, y + h - 2, w - 8, 16);
+
+    // 2. Hard-Light Plasma Deck Body
+    ctx.save();
+    if (t > 0.2) {
+      ctx.shadowColor = coreCol;
+      ctx.shadowBlur = 10 + 10 * t;
+    }
+    const deckGrad = ctx.createLinearGradient(x, y, x, y + h);
+    deckGrad.addColorStop(0, `${glowRgba} ${lerp(0.32, 0.52, t)})`);
+    deckGrad.addColorStop(0.5, 'rgba(8, 34, 46, 0.86)');
+    deckGrad.addColorStop(1, `${glowRgba} ${lerp(0.18, 0.36, t)})`);
+    ctx.fillStyle = deckGrad;
+    drawRoundedRect(x, y, w, h, 4);
+    ctx.fill();
+    ctx.restore();
+
+    // 3. Segmented Hard-Light Tiles & Outward Flowing Energy Pulses (clipped inside deck)
+    ctx.save();
+    drawRoundedRect(x + 1, y + 1, w - 2, h - 2, 3);
+    ctx.clip();
+
+    // Subtle hex/tech vertical ribs
+    ctx.strokeStyle = `${glowRgba} ${lerp(0.18, 0.35, t)})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let sx = x + 12; sx < x + w - 8; sx += 16) {
+      ctx.moveTo(sx, y);
+      ctx.lineTo(sx - 5, y + h);
+    }
+    ctx.stroke();
+
+    // Animated outward energy pulses radiating from center projector
+    const halfSpan = w / 2;
+    const speed = shifted ? 85 : 42;
+    for (let k = 0; k < 3; k++) {
+      const dist = ((globalTime * speed + k * (halfSpan / 3)) % Math.max(12, halfSpan));
+      const alpha = (1 - dist / Math.max(12, halfSpan)) * lerp(0.35, 0.72, t);
+      ctx.fillStyle = `rgba(180, 253, 255, ${alpha})`;
+      ctx.fillRect(cx + dist - 3, y + 2, 6, h - 4);
+      ctx.fillRect(cx - dist - 3, y + 2, 6, h - 4);
+    }
+
+    // Localized footstep energy ripple when player stands on this space bridge
+    if (state.player && state.player.onGround) {
+      const p = state.player;
+      const px = p.x + p.w / 2;
+      if (px >= x && px <= x + w && Math.abs((p.y + p.h) - y) < 5) {
+        const footGlow = ctx.createRadialGradient(px, y + 2, 2, px, y + 2, 34);
+        footGlow.addColorStop(0, 'rgba(220, 255, 255, 0.85)');
+        footGlow.addColorStop(0.5, `${glowRgba} 0.4)`);
+        footGlow.addColorStop(1, `${glowRgba} 0)`);
+        ctx.fillStyle = footGlow;
+        ctx.fillRect(px - 36, y, 72, h);
+      }
+    }
+    ctx.restore();
+
+    // 4. Crisp Laser Top & Bottom Energy Rails
+    ctx.fillStyle = railCol;
+    ctx.fillRect(x + 3, y, w - 6, 2.5);
+    ctx.fillStyle = `${glowRgba} 0.65)`;
+    ctx.fillRect(x + 4, y + h - 2, w - 8, 2);
+
+    // 5. Sleek Magnetic End-Cap Emitter Nodes (left & right)
+    const capW = 7;
+    const drawCap = (ex, dir) => {
+      ctx.fillStyle = '#0d2530';
+      ctx.fillRect(ex, y - 2, capW, h + 4);
+      ctx.strokeStyle = coreCol;
+      ctx.lineWidth = 1.4;
+      ctx.strokeRect(ex, y - 2, capW, h + 4);
+      // Glowing emitter slit facing inward
+      ctx.fillStyle = railCol;
+      ctx.fillRect(dir > 0 ? ex + capW - 2 : ex, y + 3, 2, h - 6);
+    };
+    drawCap(x - 1, 1);
+    drawCap(x + w - capW + 1, -1);
+
+    // 6. Central Armored Holographic Projector Core + Label
+    const coreW = shifted ? 68 : 54;
+    ctx.fillStyle = '#071b24';
+    drawRoundedRect(cx - coreW / 2, y - 1, coreW, h + 2, 4);
+    ctx.fill();
+    ctx.strokeStyle = coreCol;
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    // Bottom thruster crystal under center anchor
+    ctx.fillStyle = coreCol;
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, y + h + 1);
+    ctx.lineTo(cx + 6, y + h + 1);
+    ctx.lineTo(cx, y + h + 8);
+    ctx.closePath();
+    ctx.fill();
+
+    // Crisp `bridge` / `BRIDGE` holographic readout
+    ctx.font = `800 ${shifted ? 11 : 10}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = shifted ? '#ffffff' : '#7eeef5';
+    ctx.fillText(shifted ? 'BRIDGE' : 'bridge', cx, cy + 0.5);
+
+    ctx.restore();
+  }
+
+  function drawExitDoor(ctx, ex, t, globalTime) {
+    const pulse = 0.5 + 0.5 * Math.sin(ex.pulse);
+    const open = smoothstep(ex.openT);
+    const shifted = t >= 0.5;
+
+    // Anchor visual door frame flush to floor (ex.y + ex.h), slightly taller for commanding silhouette
+    const doorW = ex.w + 4;
+    const doorH = ex.h + 14;
+    const dx = ex.x - 2;
+    const dy = (ex.y + ex.h) - doorH;
+    const cx = dx + doorW / 2;
+    const floorY = dy + doorH;
+
+    const glowCol = shifted ? '#5ef2ff' : '#45e8a2';
+    const glowSoft = shifted ? 'rgba(94, 242, 255,' : 'rgba(69, 232, 162,';
+
+    ctx.save();
+
+    // 1. Floor light spill cone when door opens
+    if (open > 0.05) {
+      const cone = ctx.createRadialGradient(cx, floorY, 4, cx, floorY, 54 * open);
+      cone.addColorStop(0, `${glowSoft} ${0.32 * open})`);
+      cone.addColorStop(1, `${glowSoft} 0)`);
+      ctx.fillStyle = cone;
+      ctx.beginPath();
+      ctx.ellipse(cx, floorY, 52 * open, 12 * open, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 2. Outer Armored Sci-Fi Frame (chamfered top corners)
+    const cham = 9;
+    ctx.beginPath();
+    ctx.moveTo(dx + cham, dy);
+    ctx.lineTo(dx + doorW - cham, dy);
+    ctx.lineTo(dx + doorW, dy + cham);
+    ctx.lineTo(dx + doorW, floorY);
+    ctx.lineTo(dx, floorY);
+    ctx.lineTo(dx, dy + cham);
+    ctx.closePath();
+
+    ctx.fillStyle = '#0e222b';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = open > 0.3 ? glowCol : '#2b6678';
+    if (open > 0.2 || shifted) {
+      ctx.shadowColor = glowCol;
+      ctx.shadowBlur = 8 + open * 12 + pulse * 4;
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Side energy conduit strips on frame pillars
+    ctx.fillStyle = `${glowSoft} ${0.35 + 0.55 * open})`;
+    ctx.fillRect(dx + 3, dy + 12, 2.5, doorH - 18);
+    ctx.fillRect(dx + doorW - 5.5, dy + 12, 2.5, doorH - 18);
+
+    // 3. Inner Doorway Aperture (clipped)
+    const inX = dx + 8;
+    const inY = dy + 8;
+    const inW = doorW - 16;
+    const inH = doorH - 8;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(inX, inY, inW, inH);
+    ctx.clip();
+
+    // Deep portal cavity background
+    const bgGrad = ctx.createLinearGradient(inX, inY, inX, floorY);
+    bgGrad.addColorStop(0, '#04141b');
+    bgGrad.addColorStop(0.5, shifted ? '#0b3848' : '#0a332d');
+    bgGrad.addColorStop(1, shifted ? '#196f85' : '#146952');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(inX, inY, inW, inH);
+
+    // Swirling energy rings & rising portal motes inside open doorway
+    if (open > 0.04) {
+      ctx.save();
+      ctx.translate(cx, inY + inH * 0.52);
+      for (let r = 0; r < 3; r++) {
+        const phase = (globalTime * 1.4 + r * 0.33) % 1;
+        const rad = 4 + phase * 26;
+        ctx.strokeStyle = `${glowSoft} ${(1 - phase) * 0.7 * open})`;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rad * 0.72, rad, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Vertical rising light motes
+      for (let m = 0; m < 7; m++) {
+        const mx = inX + 5 + ((m * 17) % Math.max(8, inW - 10));
+        const my = floorY - (((globalTime * (28 + m * 6) + m * 19) % inH));
+        ctx.fillStyle = `${glowSoft} ${0.75 * open})`;
+        ctx.fillRect(mx, my, 2, 5);
+      }
+
+      // Bright core beam
+      const coreGrad = ctx.createRadialGradient(cx, inY + inH * 0.55, 2, cx, inY + inH * 0.55, inW * 0.65);
+      coreGrad.addColorStop(0, `rgba(225, 255, 250, ${0.55 * open})`);
+      coreGrad.addColorStop(0.5, `${glowSoft} ${0.28 * open})`);
+      coreGrad.addColorStop(1, `${glowSoft} 0)`);
+      ctx.fillStyle = coreGrad;
+      ctx.fillRect(inX, inY, inW, inH);
+    }
+
+    // 4. Sliding Armored Double Blast Panels
+    const halfW = inW / 2;
+    const slide = open * (halfW - 1);
+
+    // Left blast door
+    const lx = inX - slide;
+    ctx.fillStyle = '#15313d';
+    ctx.fillRect(lx, inY, halfW, inH);
+    ctx.fillStyle = '#1e4252';
+    ctx.fillRect(lx + 3, inY + 5, halfW - 6, inH * 0.36);
+    ctx.fillRect(lx + 3, inY + inH * 0.5, halfW - 6, inH * 0.38);
+    // Glowing inner seam edge
+    ctx.fillStyle = glowCol;
+    ctx.fillRect(lx + halfW - 2, inY, 2, inH);
+
+    // Right blast door
+    const rx = inX + halfW + slide;
+    ctx.fillStyle = '#15313d';
+    ctx.fillRect(rx, inY, halfW, inH);
+    ctx.fillStyle = '#1e4252';
+    ctx.fillRect(rx + 3, inY + 5, halfW - 6, inH * 0.36);
+    ctx.fillRect(rx + 3, inY + inH * 0.5, halfW - 6, inH * 0.38);
+    // Glowing inner seam edge
+    ctx.fillStyle = glowCol;
+    ctx.fillRect(rx, inY, 2, inH);
+
+    // Sweeping laser scanline when closed
+    if (open < 0.7) {
+      const scanY = inY + ((globalTime * 36) % inH);
+      ctx.fillStyle = `${glowSoft} ${(1 - open) * 0.55})`;
+      ctx.fillRect(inX, scanY, inW, 2);
+    }
+
+    ctx.restore(); // end aperture clip
+
+    // 5. Top Lintel Status Beacon & Crisp `exit` / `EXIT` Sign
+    const plaqueW = 42;
+    const plaqueH = 14;
+    ctx.fillStyle = '#081820';
+    drawRoundedRect(cx - plaqueW / 2, dy - 9, plaqueW, plaqueH, 4);
+    ctx.fill();
+    ctx.strokeStyle = glowCol;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    // Status LED dots flanking plaque
+    ctx.fillStyle = open > 0.4 ? glowCol : `rgba(69, 232, 162, ${0.4 + 0.5 * pulse})`;
+    ctx.beginPath();
+    ctx.arc(cx - plaqueW / 2 - 5, dy - 2, 2.2, 0, Math.PI * 2);
+    ctx.arc(cx + plaqueW / 2 + 5, dy - 2, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.font = `800 9px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = shifted ? '#c8fcff' : '#aff5dc';
+    ctx.fillText(shifted ? 'EXIT' : 'exit', cx, dy - 1.5);
+
+    // 6. Level-Clear Warp Shockwave Ring
+    if (ex.warpT > 0) {
+      const wRad = 12 + ex.warpT * 68;
+      ctx.strokeStyle = `${glowSoft} ${(1 - ex.warpT) * 0.9})`;
+      ctx.lineWidth = 3 * (1 - ex.warpT) + 1;
+      ctx.beginPath();
+      ctx.arc(cx, dy + doorH * 0.55, wRad, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawPlayerSprite(ctx, p, t, globalTime) {
+    const px = 2; // Crisp 2x logical pixel grid
+    const rect = (x, y, w, h, color) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(Math.round(x) * px, Math.round(y) * px, Math.round(w) * px, Math.round(h) * px);
+    };
+
+    const st = p.animState;
+    const at = p.animTime;
+    const facing = p.facing || 1;
+    const shifted = t >= 0.5;
+
+    // Procedural animation kinematics
+    let bobY = 0;
+    let bodyLean = 0;
+    let frontThighX = 0, frontThighY = 0, frontShinX = 0, frontShinY = 0;
+    let backThighX = 0, backThighY = 0, backShinX = 0, backShinY = 0;
+    let gunBobY = 0;
+
+    if (st === 'idle') {
+      bobY = Math.sin(at) > 0.2 ? -0.5 : 0;
+      gunBobY = Math.sin(at - 0.6) > 0.2 ? -0.5 : 0;
+      frontThighX = 1; frontShinX = 1;
+      backThighX = -2; backShinX = -2;
+    } else if (st === 'run') {
+      const s = Math.sin(at);
+      const c = Math.cos(at);
+      bobY = -Math.abs(s) * 1.4;
+      bodyLean = 0.08;
+      gunBobY = Math.abs(c) * 0.8;
+      frontThighX = s * 3.5;
+      frontThighY = c > 0 ? -c * 1.6 : 0;
+      frontShinX = s * 4.5 - (c > 0 ? 1 : 0);
+      frontShinY = c > 0 ? -c * 2.2 : 0;
+      backThighX = -s * 3.5;
+      backThighY = c < 0 ? c * 1.6 : 0;
+      backShinX = -s * 4.5 - (c < 0 ? 1 : 0);
+      backShinY = c < 0 ? c * 2.2 : 0;
+    } else if (st === 'jump') {
+      // Iconic reference pose: forward thrust, front knee tucked, rear leg extended back
+      bobY = -1;
+      bodyLean = 0.14;
+      frontThighX = 3; frontThighY = -2;
+      frontShinX = 1; frontShinY = -1.5;
+      backThighX = -3.5; backThighY = -0.5;
+      backShinX = -6.5; backShinY = 0.5;
+      gunBobY = -0.5;
+    } else {
+      // Fall / hover stabilize
+      bobY = 0;
+      bodyLean = 0.04;
+      frontThighX = 2; frontThighY = -1;
+      frontShinX = 2.5; frontShinY = 0;
+      backThighX = -2.5; backThighY = -1;
+      backShinX = -3.5; backShinY = 0.5;
+      gunBobY = 0.5;
+    }
+
+    // Palette derived from reference sprite (vivid orange suit, gunmetal armor, cyan visor & rail, blazing flame)
+    const C = {
+      outline: '#161b22',
+      suitHi: '#ff962e',
+      suitMid: '#e85826',
+      suitDark: '#a6311d',
+      armorHi: '#6c7a89',
+      armorMid: '#46515e',
+      armorDark: '#262d36',
+      visorGlow: shifted ? '#b8fcff' : '#7ef9ff',
+      visorCore: '#ffffff',
+      visorRim: '#103b4a',
+      cyanCoil: shifted ? '#7ef9ff' : '#32dce8',
+      flameCore: shifted ? '#d6feff' : '#fff7b2',
+      flameMid: shifted ? '#5ef2ff' : '#ffae2b',
+      flameTip: shifted ? '#1fb8d4' : '#ff4d1a'
+    };
+
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    // Anchor at bottom-center of physics hitbox
+    ctx.translate(p.x + p.w / 2, p.y + p.h);
+    ctx.scale(facing * p.scaleX, p.scaleY);
+    ctx.rotate(bodyLean);
+
+    // Subtle Shift overdrive aura
+    if (t > 0.25) {
+      ctx.shadowColor = '#38e8f5';
+      ctx.shadowBlur = 10 * t;
+    }
+
+    const oy = bobY;
+
+    // --- 1. JETPACK FLAME (multi-layer flickering pixel plume) ---
+    const flame = p.jetFlame;
+    if (flame > 0.1) {
+      const flick = Math.sin(globalTime * 48) * 1.4 + Math.cos(globalTime * 31) * 0.9;
+      const len = Math.max(2, Math.round(flame * 9 + flick));
+      const fy = -16 + oy;
+
+      ctx.save();
+      ctx.shadowColor = shifted ? '#5ef2ff' : '#ff8c1a';
+      ctx.shadowBlur = 8 + flame * 8;
+      // Outer orange/red tip
+      rect(-8 - len, fy, len, 3, C.flameTip);
+      rect(-10 - len, fy + 1, 2, 1, C.flameTip);
+      if (len > 4) {
+        rect(-9 - Math.floor(len * 0.7), fy - 1, Math.floor(len * 0.55), 1, C.flameTip);
+        rect(-9 - Math.floor(len * 0.7), fy + 3, Math.floor(len * 0.55), 1, C.flameTip);
+      }
+      // Mid golden flame
+      const midLen = Math.max(2, Math.round(len * 0.65));
+      rect(-8 - midLen, fy, midLen, 3, C.flameMid);
+      // Hot white-yellow core
+      const coreLen = Math.max(1, Math.round(len * 0.32));
+      rect(-8 - coreLen, fy + 1, coreLen, 1, C.flameCore);
+      ctx.restore();
+    }
+
+    // --- 2. REAR THRUSTER STRUT & JETPACK BACKPACK ---
+    // Diagonal stabilizer strut extending down-back
+    rect(-8, -11 + oy, 2, 1, C.armorHi);
+    rect(-10, -10 + oy, 2, 1, C.armorMid);
+    rect(-12, -9 + oy, 2, 1, C.armorHi);
+
+    // Vertical antenna with red/orange tip
+    rect(-5, -24 + oy, 1, 6, C.armorHi);
+    rect(-5, -25 + oy, 1, 1, '#ff4d2e');
+
+    // Main jetpack housing
+    rect(-8, -18 + oy, 5, 8, C.armorDark);
+    rect(-7, -17 + oy, 4, 6, C.armorMid);
+    rect(-8, -16 + oy, 2, 3, C.armorHi); // rear nozzle
+    // Cyan energy coil on jetpack
+    rect(-5, -16 + oy, 1, 3, C.cyanCoil);
+
+    // --- 3. BACK LEG (behind torso) ---
+    const blx = Math.round(-2 + backThighX);
+    const bly = Math.round(-8 + backThighY + oy * 0.5);
+    const bsx = Math.round(-2 + backShinX);
+    const bsy = Math.round(-4 + backShinY);
+    // Thigh
+    rect(blx, bly, 3, 4, C.suitDark);
+    // Knee pad
+    rect(bsx, bsy - 1, 3, 2, C.armorDark);
+    // Shin & Boot
+    rect(bsx, bsy + 1, 3, 2, C.suitDark);
+    rect(bsx, bsy + 2, 4, 2, C.armorDark);
+
+    // --- 4. TORSO & ARMOR ---
+    // Back orange suit layer
+    rect(-4, -15 + oy, 7, 8, C.suitMid);
+    // Gunmetal chestplate & shoulder pad
+    rect(-3, -15 + oy, 5, 6, C.armorDark);
+    rect(-2, -14 + oy, 4, 3, C.armorMid);
+    // Bright orange shoulder armor
+    rect(-1, -15 + oy, 3, 2, C.suitHi);
+    // Utility belt with glowing cyan buckle
+    rect(-4, -9 + oy, 7, 2, C.armorDark);
+    rect(-3, -9 + oy, 2, 2, C.armorHi);
+    rect(0, -9 + oy, 2, 2, C.cyanCoil);
+
+    // --- 5. FRONT LEG ---
+    const flx = Math.round(0 + frontThighX);
+    const fly = Math.round(-8 + frontThighY + oy * 0.5);
+    const fsx = Math.round(0 + frontShinX);
+    const fsy = Math.round(-4 + frontShinY);
+    // Thigh (bright orange)
+    rect(flx, fly, 3, 4, C.suitMid);
+    rect(flx + 1, fly, 1, 3, C.suitHi);
+    // Knee pad
+    rect(fsx + 1, fsy - 1, 3, 2, C.armorMid);
+    // Shin & Boot
+    rect(fsx, fsy + 1, 3, 2, C.suitMid);
+    rect(fsx, fsy + 2, 4, 2, C.armorDark);
+    rect(fsx + 2, fsy + 2, 2, 1, C.armorHi);
+
+    // --- 6. HELMET & GLOWING CYAN VISOR ---
+    const hy = -22 + oy;
+    // Orange helmet dome
+    rect(-3, hy, 7, 7, C.outline);
+    rect(-2, hy + 1, 5, 5, C.suitMid);
+    rect(-2, hy + 1, 4, 2, C.suitHi); // top highlight
+    // Dark visor bezel facing forward
+    rect(1, hy + 2, 4, 4, C.visorRim);
+    // Glowing cyan visor eye
+    ctx.save();
+    ctx.shadowColor = C.visorGlow;
+    ctx.shadowBlur = shifted ? 12 : 6;
+    rect(2, hy + 2, 2, 3, C.visorGlow);
+    rect(2, hy + 3, 1, 1, C.visorCore);
+    ctx.restore();
+
+    // --- 7. FRONT ARM & SCI-FI BLASTER RIFLE ---
+    const gy = -14 + oy + gunBobY;
+    // Forearm & orange glove
+    rect(1, gy + 1, 4, 2, C.armorMid);
+    rect(4, gy + 1, 2, 2, C.suitHi);
+    // Rifle receiver & grip
+    rect(5, gy, 6, 3, C.armorDark);
+    rect(5, gy, 5, 1, C.armorHi);
+    // Top scope
+    rect(6, gy - 2, 3, 1, C.armorHi);
+    rect(7, gy - 1, 1, 1, C.armorDark);
+    // Extended barrel & cyan energy rail
+    rect(10, gy, 4, 2, C.armorMid);
+    rect(9, gy + 1, 4, 1, C.cyanCoil);
+    // Curved magazine
+    rect(7, gy + 3, 2, 2, C.armorDark);
+
+    ctx.restore();
+
+    // Subtle floating typographic indicator (`you` / `YOU`) so CASE SHIFT's word theme stays clear
+    ctx.save();
+    ctx.font = `700 ${shifted ? 10 : 9}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = shifted ? 'rgba(126, 238, 245, 0.85)' : 'rgba(139, 184, 194, 0.55)';
+    ctx.fillText(shifted ? 'YOU' : 'you', p.x + p.w / 2, p.y - 24);
+    ctx.restore();
+  }
+
+  function render() {
+    const W = CONFIG.WIDTH;
+    const H = CONFIG.HEIGHT;
+    const t = state.smoothT;
+    const def = LEVELS[state.levelIdx];
+
+    ctx.save();
+
+    // 1. Background fill, bioluminescent nebula aura, stardust & subtle grid
+    ctx.fillStyle = lerpRGB(CONFIG.COLORS.bgLower, CONFIG.COLORS.bgUpper, t);
+    ctx.fillRect(0, 0, W, H);
+
+    // Soft drifting cyan-teal nebula blooms (matching Void Arc aesthetic)
+    const neb1 = ctx.createRadialGradient(W * 0.26, H * 0.34, 18, W * 0.26, H * 0.34, W * 0.44);
+    neb1.addColorStop(0, `rgba(26, 152, 172, ${lerp(0.22, 0.34, t)})`);
+    neb1.addColorStop(0.5, `rgba(12, 74, 88, ${lerp(0.09, 0.16, t)})`);
+    neb1.addColorStop(1, 'rgba(5, 13, 18, 0)');
+    ctx.fillStyle = neb1;
+    ctx.fillRect(0, 0, W, H);
+
+    const neb2 = ctx.createRadialGradient(W * 0.78, H * 0.72, 12, W * 0.78, H * 0.72, W * 0.36);
+    neb2.addColorStop(0, `rgba(30, 172, 190, ${lerp(0.14, 0.25, t)})`);
+    neb2.addColorStop(1, 'rgba(5, 13, 18, 0)');
+    ctx.fillStyle = neb2;
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle floating stardust motes
+    for (let i = 0; i < 34; i++) {
+      const sx = ((i * 197 + state.time * (4 + (i % 5))) % (W + 40)) - 20;
+      const sy = ((i * 131 + Math.sin(state.time * 0.6 + i) * 14) % H + H) % H;
+      const r = (i % 3 === 0) ? 1.6 : 1.0;
+      const a = 0.14 + 0.18 * (0.5 + 0.5 * Math.sin(state.time * 1.4 + i * 2.1));
+      ctx.fillStyle = (i % 4 === 0)
+        ? `rgba(94, 242, 255, ${a + 0.12 * t})`
+        : `rgba(215, 248, 252, ${a})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = t > 0.5
+      ? `rgba(56, 232, 245, ${lerp(0.03, 0.065, t)})`
+      : 'rgba(94, 242, 255, 0.03)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const gridOffX = -(state.cameraX % 32);
+    for (let gx = 24 + gridOffX; gx < W + 32; gx += 32) {
+      ctx.moveTo(gx, 0);
+      ctx.lineTo(gx, H);
+    }
+    for (let gy = 24; gy < H; gy += 32) {
+      ctx.moveTo(0, gy);
+      ctx.lineTo(W, gy);
+    }
+    ctx.stroke();
+
+    // Subtle electric cyan inner frame glow when SHIFT is active
+    if (t > 0.01) {
+      ctx.strokeStyle = `rgba(56, 232, 245, ${0.32 * t})`;
+      ctx.lineWidth = 6 * t;
+      ctx.strokeRect(3, 3, W - 6, H - 6);
+    }
+
+    // 2. Background Level Typography (screen-space watermark + 1-line minimalist hint)
+    ctx.save();
+    ctx.font = `800 132px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = t > 0.5 ? 'rgba(56, 232, 245, 0.09)' : 'rgba(126, 238, 245, 0.05)';
+    ctx.fillText(def.num, W - 42, 34);
+
+    ctx.font = `600 13px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = t > 0.5 ? 'rgba(126, 238, 245, 0.78)' : 'rgba(110, 168, 180, 0.78)';
+    const prefix = t > 0.5 ? `// ${def.num} ${def.name}: ` : `// ${def.num} ${def.name.toLowerCase()}: `;
+    ctx.fillText(prefix + def.hint, 42, 42);
+    ctx.restore();
+
+    // Apply micro screen shake + camera world scroll
+    ctx.save();
+    ctx.translate(state.shakeX - Math.round(state.cameraX), state.shakeY);
+
+    // 3. Wind Zones (behind terrain/player)
+    for (const w of state.winds) {
+      const grad = ctx.createLinearGradient(w.x, w.y + w.h, w.x, w.y);
+      const alphaBot = lerp(0.08, 0.24, t);
+      const alphaTop = lerp(0.01, 0.05, t);
+      const col = t > 0.5 ? '121, 192, 255' : '126, 231, 135';
+      grad.addColorStop(0, `rgba(${col}, ${alphaBot})`);
+      grad.addColorStop(1, `rgba(${col}, ${alphaTop})`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(w.x, w.y, w.w, w.h);
+
+      // Dashed side boundaries
+      ctx.save();
+      ctx.strokeStyle = `rgba(${col}, ${lerp(0.22, 0.55, t)})`;
+      ctx.setLineDash([5, 6]);
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(w.x + 0.5, w.y + 0.5, w.w - 1, w.h - 1);
+      ctx.restore();
+
+      // Rising ASCII particle lines
+      ctx.font = `700 ${Math.round(lerp(12, 16, t))}px ${getComputedStyle(document.body).fontFamily}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = `rgba(${col}, ${lerp(0.45, 0.92, t)})`;
+      for (const pt of w.particles) {
+        const px = w.x + 12 + pt.rx * (w.w - 24);
+        const py = w.y + pt.ry * w.h;
+        ctx.fillText(pt.glyph, px, py);
+      }
+
+      // Wind word label
+      const windLabel = t >= 0.5 ? 'WIND' : 'wind';
+      ctx.font = `800 ${Math.round(lerp(15, 22, t))}px ${getComputedStyle(document.body).fontFamily}`;
+      ctx.fillStyle = t >= 0.5 ? '#a5d6ff' : '#7ee787';
+      ctx.fillText(windLabel, w.x + w.w / 2, w.y + w.h - 22);
+    }
+
+    // 4. Gap Zones (carved pits with cautionary typography)
+    for (const gap of state.gaps) {
+      const gx = gap.cx - gap.curW / 2;
+      ctx.fillStyle = '#06080d';
+      ctx.fillRect(gx, gap.y, gap.curW, gap.h);
+
+      // Glowing pit edges
+      const gColor = t >= 0.5 ? CONFIG.COLORS.gapUpper : CONFIG.COLORS.gapLower;
+      ctx.strokeStyle = gColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(gx, gap.y);
+      ctx.lineTo(gx, gap.y + gap.h);
+      ctx.moveTo(gx + gap.curW, gap.y);
+      ctx.lineTo(gx + gap.curW, gap.y + gap.h);
+      ctx.stroke();
+
+      // Gap label
+      ctx.font = `800 ${Math.round(lerp(14, 24, t))}px ${getComputedStyle(document.body).fontFamily}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = gColor;
+      ctx.fillText(t >= 0.5 ? 'GAP' : 'gap', gap.cx, gap.y + 34);
+    }
+
+    // 5. Static Terrain Solids
+    for (const s of state.terrainSolids) {
+      ctx.fillStyle = CONFIG.COLORS.wallFill;
+      ctx.fillRect(s.x, s.y, s.w, s.h);
+      ctx.strokeStyle = CONFIG.COLORS.wallStroke;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(s.x + 0.75, s.y + 0.75, s.w - 1.5, s.h - 1.5);
+
+      // Crisp top highlight edge
+      if (s.y > 0 && s.w > 24) {
+        ctx.fillStyle = t > 0.5 ? '#38e8f580' : CONFIG.COLORS.wallTop;
+        ctx.fillRect(s.x + 1, s.y, s.w - 2, 2.5);
+      }
+    }
+
+    // 6. Sci-Fi Hard-Light Space Bridges (`bridge` <-> `BRIDGE`)
+    for (const br of state.bridges) {
+      drawSpaceBridge(ctx, br, t, state.time);
+    }
+
+    // 7. Sci-Fi Gravity Cargo Pods / Heavy Containment Monoliths (`box` <-> `BOX`)
+    for (const box of state.boxes) {
+      drawSciFiBox(ctx, box, t, state.time);
+    }
+
+    // 8. Keyboard Shift Hazards (`8` <-> `*`)
+    for (const hz of state.hazards) {
+      const lethal = t >= CONFIG.HAZARD_ACTIVE_T;
+      ctx.save();
+      ctx.translate(hz.cx, hz.cy);
+
+      if (!lethal) {
+        // Safe floating '8' platform
+        ctx.fillStyle = '#0c2731';
+        drawRoundedRect(-hz.w / 2, -hz.h / 2, hz.w, hz.h, 6);
+        ctx.fill();
+        ctx.strokeStyle = t > 0.15 ? '#f28b50' : '#32dce8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.font = `800 22px ${getComputedStyle(document.body).fontFamily}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#e6edf3';
+        ctx.fillText('8', 0, 1);
+      } else {
+        // Spinning glowing red '*' sawblade
+        ctx.shadowColor = CONFIG.COLORS.hazardStar;
+        ctx.shadowBlur = 18;
+        ctx.rotate(hz.angle);
+
+        // Danger aura ring
+        ctx.strokeStyle = 'rgba(255, 77, 109, 0.35)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, hz.size * 0.48, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Crisp 6-pointed asterisk sawblade + typography '*'
+        ctx.font = `900 44px ${getComputedStyle(document.body).fontFamily}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = CONFIG.COLORS.hazardStar;
+        ctx.fillText('*', 0, 7);
+      }
+      ctx.restore();
+    }
+
+    // 9. Exit Sci-Fi Airlock Door (`exit` <-> `EXIT`) with animated blast panels & vortex
+    if (state.exit) {
+      drawExitDoor(ctx, state.exit, t, state.time);
+    }
+
+    // 9.5. Patrolling Security Drones (`guard` <-> `GUARD`)
+    for (const en of state.enemies) {
+      drawGuardEnemy(ctx, en, t, state.time);
+    }
+
+    // 10. Player — Pixel-Art Sci-Fi Jetpack Ranger (animated idle / run / jump / fall + Shift overdrive)
+    if (state.player) {
+      drawPlayerSprite(ctx, state.player, t, state.time);
+      // Muzzle flash burst when firing
+      if (state.player.muzzleFlash > 0) {
+        const p = state.player;
+        const dir = p.facing || 1;
+        const fx = p.x + p.w / 2 + dir * 26;
+        const fy = p.y + p.h - 24;
+        ctx.save();
+        ctx.shadowColor = '#7ef9ff';
+        ctx.shadowBlur = 14;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(fx, fy, 4 + p.muzzleFlash * 45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // 10.5. Plasma Blaster Bolts
+    for (const b of state.bullets) {
+      ctx.save();
+      ctx.shadowColor = b.shifted ? '#7ef9ff' : '#32dce8';
+      ctx.shadowBlur = b.shifted ? 14 : 8;
+      ctx.fillStyle = b.shifted ? '#b8fcff' : '#5ef2ff';
+      drawRoundedRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h, 3);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(b.x - b.w / 2 + 2, b.y - 1, Math.max(4, b.w - 4), 2);
+      ctx.restore();
+    }
+
+    // 11. Particles
+    for (const pt of state.particles) {
+      const alpha = clamp(pt.life / pt.maxLife, 0, 1);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = pt.color;
+      if (pt.glyph) {
+        ctx.font = `800 14px ${getComputedStyle(document.body).fontFamily}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(pt.glyph, pt.x, pt.y);
+      } else {
+        ctx.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
+      }
+      ctx.restore();
+    }
+
+    ctx.restore(); // end world camera transform
+
+    // Long-level progress indicator (bottom-right)
+    if (state.levelWidth > W && state.player) {
+      const barW = 140;
+      const barH = 5;
+      const bx = W - barW - 22;
+      const by = H - 18;
+      const pct = clamp(state.player.x / Math.max(1, state.levelWidth - 80), 0, 1);
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(8, 28, 36, 0.72)';
+      drawRoundedRect(bx - 4, by - 4, barW + 8, barH + 8, 6);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(50, 220, 232, 0.35)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = t >= 0.5 ? '#5ef2ff' : '#32dce8';
+      drawRoundedRect(bx, by, Math.max(6, barW * pct), barH, 3);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 12. Screen Flash Overlay (screen-space)
+    if (state.flashAlpha > 0) {
+      ctx.fillStyle = state.flashColor;
+      ctx.globalAlpha = state.flashAlpha;
+      ctx.fillRect(-10, -10, W + 20, H + 20);
+    }
+
+    ctx.restore();
+  }
+
+  // ==================== INPUT & UI EVENTS ====================
+  function onJumpPress() {
+    AUDIO.init();
+    if (state.mode === 'title') {
+      startNewRun(0);
+      return;
+    }
+    if (state.mode === 'playing' && state.player) {
+      state.player.jumpBufferTimer = CONFIG.JUMP_BUFFER;
+    }
+    state.keys.jumpHeld = true;
+  }
+
+  function onJumpRelease() {
+    state.keys.jumpHeld = false;
+    if (state.mode === 'playing' && state.player && state.player.vy < -160) {
+      state.player.vy *= CONFIG.JUMP_CUT_MULT;
+    }
+  }
+
+  window.addEventListener('keydown', (e) => {
+    const code = e.code;
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(code)) {
+      e.preventDefault();
+    }
+
+    if (code === 'ShiftLeft' || code === 'ShiftRight' || e.key === 'Shift') {
+      setShiftHeld(true);
+      return;
+    }
+
+    if (e.repeat) return;
+
+    if (code === 'KeyA' || code === 'ArrowLeft') state.keys.left = true;
+    if (code === 'KeyD' || code === 'ArrowRight') state.keys.right = true;
+    if (code === 'KeyW' || code === 'ArrowUp' || code === 'Space') onJumpPress();
+    if (code === 'Enter' && state.mode === 'title') startNewRun(0);
+    if (code === 'KeyR' && state.mode === 'playing') {
+      AUDIO.playDeath();
+      addShake(3);
+      loadLevel(state.levelIdx, false);
+    }
+    if (code === 'KeyF' || code === 'KeyJ' || code === 'KeyX') {
+      firePlayerWeapon();
+    }
+    if (code === 'KeyM') {
+      toggleMute();
+    }
+  });
+
+  window.addEventListener('keyup', (e) => {
+    const code = e.code;
+    if (code === 'ShiftLeft' || code === 'ShiftRight' || e.key === 'Shift') {
+      setShiftHeld(false);
+    }
+    if (code === 'KeyA' || code === 'ArrowLeft') state.keys.left = false;
+    if (code === 'KeyD' || code === 'ArrowRight') state.keys.right = false;
+    if (code === 'KeyW' || code === 'ArrowUp' || code === 'Space') onJumpRelease();
+  });
+
+  window.addEventListener('blur', () => {
+    state.keys.left = false;
+    state.keys.right = false;
+    state.keys.jumpHeld = false;
+    state.keys.mouseFire = false;
+    setShiftHeld(false);
+  });
+
+  function toggleMute() {
+    AUDIO.init();
+    const m = AUDIO.setMuted(!AUDIO.isMuted());
+    btnMute.textContent = m ? 'MUTED' : 'SFX';
+    btnMute.classList.toggle('muted', m);
+  }
+
+  btnPlay.addEventListener('click', () => startNewRun(0));
+  btnPlayAgain.addEventListener('click', () => startNewRun(0));
+  btnTitle.addEventListener('click', () => {
+    victoryOverlay.classList.add('hidden');
+    titleOverlay.classList.remove('hidden');
+    state.mode = 'title';
+    loadLevel(0, false);
+  });
+
+  btnRestart.addEventListener('click', () => {
+    AUDIO.init();
+    if (state.mode === 'playing') {
+      AUDIO.playDeath();
+      addShake(3);
+      loadLevel(state.levelIdx, false);
+    }
+    btnRestart.blur();
+  });
+
+  btnMute.addEventListener('click', () => {
+    toggleMute();
+    btnMute.blur();
+  });
+
+  levelSelect.addEventListener('change', (e) => {
+    AUDIO.init();
+    const idx = parseInt(e.target.value, 10);
+    if (!Number.isNaN(idx)) {
+      titleOverlay.classList.add('hidden');
+      victoryOverlay.classList.add('hidden');
+      state.mode = 'playing';
+      loadLevel(idx, false);
+    }
+    levelSelect.blur();
+  });
+
+  // Touch Controls
+  document.querySelectorAll('.touch-btn').forEach(btn => {
+    const action = btn.dataset.touch;
+    const press = (ev) => {
+      ev.preventDefault();
+      AUDIO.init();
+      btn.classList.add('pressed');
+      if (action === 'left') state.keys.left = true;
+      if (action === 'right') state.keys.right = true;
+      if (action === 'jump') onJumpPress();
+      if (action === 'fire') firePlayerWeapon();
+      if (action === 'shift') setShiftHeld(true);
+    };
+    const release = (ev) => {
+      ev.preventDefault();
+      btn.classList.remove('pressed');
+      if (action === 'left') state.keys.left = false;
+      if (action === 'right') state.keys.right = false;
+      if (action === 'jump') onJumpRelease();
+      if (action === 'shift') setShiftHeld(false);
+    };
+    btn.addEventListener('pointerdown', press);
+    btn.addEventListener('pointerup', release);
+    btn.addEventListener('pointercancel', release);
+    btn.addEventListener('pointerleave', release);
+  });
+
+  // HiDPI Canvas Setup (preserves crisp 960x540 logical resolution)
+  function resizeCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = CONFIG.WIDTH * dpr;
+    canvas.height = CONFIG.HEIGHT * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    render();
+  }
+  function aimFromPointerEvent(e) {
+    if (!state.player) return;
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width) return;
+    const canvasX = ((e.clientX - rect.left) / rect.width) * CONFIG.WIDTH;
+    const worldX = canvasX + state.cameraX;
+    const playerCenterX = state.player.x + state.player.w / 2;
+    state.player.facing = worldX >= playerCenterX ? 1 : -1;
+  }
+
+  canvas.addEventListener('mousedown', (e) => {
+    if (e.button === 0 && state.mode === 'playing' ) {
+      e.preventDefault();
+      aimFromPointerEvent(e);
+      state.keys.mouseFire = true;
+      firePlayerWeapon();
+    }
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (state.keys.mouseFire && state.mode === 'playing' ) {
+      aimFromPointerEvent(e);
+    }
+  });
+
+  window.addEventListener('mouseup', (e) => {
+    if (e.button === 0) state.keys.mouseFire = false;
+  });
+
+  window.addEventListener('resize', resizeCanvas);
+
+  // ==================== GAME LOOP ====================
+  let lastTimestamp = 0;
+  let accumulator = 0;
+  let rafId = null;
+
+  function loop(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const frameDt = Math.min((timestamp - lastTimestamp) / 1000, CONFIG.MAX_FRAME_DT);
+    lastTimestamp = timestamp;
+    accumulator += frameDt;
+
+    while (accumulator >= CONFIG.FIXED_DT) {
+      stepSimulation(CONFIG.FIXED_DT);
+      accumulator -= CONFIG.FIXED_DT;
+    }
+
+    render();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('load', () => {
+    loadLevel(0, false);
+    resizeCanvas();
+    if (rafId) cancelAnimationFrame(rafId);
+    lastTimestamp = 0;
+    accumulator = 0;
+    rafId = requestAnimationFrame(loop);
+  });
+})();
+</script>
+</body>
+</html>
